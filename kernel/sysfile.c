@@ -504,14 +504,42 @@ sys_pipe(void)
   return 0;
 }
 
+int mfilealloc(struct proc *p, int fd) {
+  int i;
+  for(i = 0; i < NOMAPS; i++)
+    if(!p->mfiles[i].va)
+      break;
+
+  if(i == NOMAPS) {
+    return 0;
+  }
+  
+  p->mfiles[i].va = p->sz;
+  p->mfiles[i].w = 1;     //TODO: see what should be assigned
+  p->mfiles[i].fd = fd;
+
+  int filesize = p->ofile[fd]->ip->size;
+  printf("file size: %d, proc size: %d\n", filesize, p->sz);
+  p->sz += PGROUNDUP(filesize);
+  printf("updated proc size: %d\n", p->sz);
+  
+  return 1;
+}
+
 uint64
 sys_mmap(void)
 {
   struct file *f;
   int fd;
+  struct proc *p = myproc();
+
   if(argfd(0, &fd, &f) < 0) {
     return 0;
   }
+
+  if(mfilealloc(p, fd) == 0)
+    return 0;
+
   printf("fd: %d - file: %p\n", fd, f);
   return 1;
 }
