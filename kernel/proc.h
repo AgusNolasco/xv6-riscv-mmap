@@ -111,5 +111,5 @@ struct proc {
   struct file *ofile[NOFILE];         // Open files
   struct inode *cwd;                  // Current directory
   char name[16];                      // Process name (debugging)
-  struct filemap mfiles[NOFILE];      // Process maped files
+  struct filemap mfiles[NOMAPS];      // Process maped files
 };
