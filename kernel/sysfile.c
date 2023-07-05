@@ -503,3 +503,24 @@ sys_pipe(void)
   }
   return 0;
 }
+
+uint64
+sys_mmap(void)
+{
+  struct file *f;
+  int fd;
+  if(argfd(0, &fd, &f) < 0) {
+    return 0;
+  }
+  printf("fd: %d - file: %p\n", fd, f);
+  return 1;
+}
+
+uint64
+sys_munmap(void)
+{
+  uint64 addr;
+  argaddr(0, &addr);
+  printf("addr: %d\n", addr);
+  return 0;
+}
