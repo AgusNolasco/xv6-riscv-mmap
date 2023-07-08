@@ -3,8 +3,11 @@
 #include "memlayout.h"
 #include "riscv.h"
 #include "spinlock.h"
+#include "sleeplock.h"
 #include "proc.h"
 #include "defs.h"
+#include "fs.h"
+#include "file.h"
 
 struct spinlock tickslock;
 uint ticks;
@@ -27,6 +30,22 @@ void
 trapinithart(void)
 {
   w_stvec((uint64)kernelvec);
+}
+
+int
+validmappedaddr(uint64 addr)
+{
+  struct proc *p = myproc();
+  uint64 va, fsize;
+
+  for (int i = 0; i < NOMAPS; i++) {
+    va = p->mfiles[i].va;
+    fsize = p->ofile[p->mfiles[i].fd]->ip->size;
+    if (va <= addr && addr < va + PGROUNDUP(fsize)) {
+      return 1;
+    }
+  }
+  return 0;
 }
 
 //
@@ -65,6 +84,10 @@ usertrap(void)
     intr_on();
 
     syscall();
+  } else if((r_scause() == 13 || r_scause() == 15) && validmappedaddr(r_stval())){
+    printf("Loading file content into user space (TODO implement)\n");
+    //TODO: implement this
+    setkilled(p); // TODO: remove this after implement dynamic file loading
   } else if((which_dev = devintr()) != 0){
     // ok
   } else {

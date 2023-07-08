@@ -504,7 +504,9 @@ sys_pipe(void)
   return 0;
 }
 
-int mfilealloc(struct proc *p, int fd) {
+int
+mfilealloc(struct proc *p, int fd) 
+{
   int i;
   for(i = 0; i < NOMAPS; i++)
     if(!p->mfiles[i].va)
@@ -517,13 +519,12 @@ int mfilealloc(struct proc *p, int fd) {
   p->mfiles[i].va = p->sz;
   p->mfiles[i].w = 1;     //TODO: see what should be assigned
   p->mfiles[i].fd = fd;
-
-  int filesize = p->ofile[fd]->ip->size;
-  printf("file size: %d, proc size: %d\n", filesize, p->sz);
-  p->sz += PGROUNDUP(filesize);
+  int fsize = p->ofile[fd]->ip->size;
+  printf("file size: %d, proc size: %d\n", fsize, p->sz);
+  p->sz += PGROUNDUP(fsize);
   printf("updated proc size: %d\n", p->sz);
   
-  return 1;
+  return p->mfiles[i].va;
 }
 
 uint64
@@ -537,11 +538,9 @@ sys_mmap(void)
     return 0;
   }
 
-  if(mfilealloc(p, fd) == 0)
-    return 0;
-
   printf("fd: %d - file: %p\n", fd, f);
-  return 1;
+
+  return mfilealloc(p, fd);
 }
 
 uint64
@@ -549,6 +548,6 @@ sys_munmap(void)
 {
   uint64 addr;
   argaddr(0, &addr);
-  printf("addr: %d\n", addr);
+  printf("addr: %p\n", addr);
   return 0;
 }
