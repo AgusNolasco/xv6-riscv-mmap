@@ -20,12 +20,8 @@ int main()
     for (i=l; i<4096; i++)
         write(f, &zero, 1);
     write(f, str2, strlen(str2)+1);
-    close(f);
-  } else {
-    return 0;
   }
 
-  f = open(filename, O_RDONLY);
   char* addr = mmap(f);
   printf("mmap: %d\n", addr);
   printf("file[4096]: %c\n", addr[4096]);
