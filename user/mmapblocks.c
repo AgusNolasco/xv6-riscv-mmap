@@ -24,8 +24,10 @@ int main()
 
   char* addr = mmap(f);
   printf("mmap: %d\n", addr);
-  printf("file[4096]: %c\n", addr[4096]);
   printf("file[0]: %c\n", addr[0]);
+  printf("file[4096]: %c\n", addr[4096]);
+  printf("str[0]: %s\n", addr);
+  printf("str[1]: %s\n", &addr[4096]);
   printf("munmap: %d\n", munmap(addr));
   return 0;
 }
