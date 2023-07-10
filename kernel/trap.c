@@ -38,16 +38,34 @@ getmd(uint64 addr)
   struct proc *p = myproc();
   uint64 va, fsize;
 
-  for (int i = 0; i < NOMAPS; i++) {
-    va = p->mfiles[i].va;
-    if (!va)
+  for (int md = 0; md < NOMAPS; md++) {
+    va = p->mfiles[md].va;
+    if(!va)
       continue;
-    fsize = p->ofile[p->mfiles[i].fd]->ip->size;
-    if (va <= addr && addr < va + PGROUNDUP(fsize)) {
-      return i;
+    fsize = p->ofile[p->mfiles[md].fd]->ip->size;
+    if(va <= addr && addr < va + PGROUNDUP(fsize)) {
+      return md;
     }
   }
   return -1;
+}
+
+int
+mapfile(struct proc *p, int md, uint64 va)
+{
+    char *pa;
+    if((pa = kalloc()) == 0)
+      return -1;
+    int perm = p->mfiles[md].perm | PTE_R | PTE_U;
+    uint64 a = PGROUNDDOWN(va);
+    if(mappages(p->pagetable, a, PGSIZE, (uint64)pa, perm) == -1)
+      return -1;
+    int fd = p->mfiles[md].fd;
+    int offset = a - p->mfiles[md].va;
+    ilock(p->ofile[fd]->ip);
+    readi(p->ofile[fd]->ip, 1, a, offset, PGSIZE);
+    iunlock(p->ofile[fd]->ip);
+    return 0;
 }
 
 //
@@ -86,21 +104,9 @@ usertrap(void)
     intr_on();
 
     syscall();
-  } else if((r_scause() == 13 || r_scause() == 15) && (md = getmd(r_stval()) != -1)){
-    if(md == -1)
-      panic("mapped file not found");
-    printf("mapping and loading file content\n");
-
-    char *pa = kalloc();
-    int perm = p->mfiles[md].w ? PTE_R|PTE_W|PTE_U : PTE_R|PTE_U;
-    if (mappages(p->pagetable, PGROUNDDOWN(r_stval()), PGSIZE, (uint64)pa, perm) == -1) {
+  } else if((r_scause() == 13 || r_scause() == 15) && ((md = getmd(r_stval())) != -1)){
+    if(mapfile(p, md, r_stval()) != 0)
       setkilled(p);
-    } else {
-      int fd = p->mfiles[md].fd;
-      ilock(p->ofile[fd]->ip);
-      readi(p->ofile[fd]->ip, 1, PGROUNDDOWN(r_stval()), r_stval() - PGROUNDDOWN(r_stval()), PGSIZE);
-      iunlock(p->ofile[fd]->ip);
-    }
   } else if((which_dev = devintr()) != 0){
     // ok
   } else {
