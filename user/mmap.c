@@ -8,7 +8,7 @@ int main()
   int fd = open("hello.txt", O_CREATE);
   char* addr = mmap(fd);
   printf("mmap: %d\n", addr);
-  printf("munmap: %d\n", munmap(addr));
   printf("file[0]: %c\n", addr[0]);
+  printf("munmap: %d\n", munmap(addr));
   return 0;
 }

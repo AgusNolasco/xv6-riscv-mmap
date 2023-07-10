@@ -40,12 +40,32 @@ validmappedaddr(uint64 addr)
 
   for (int i = 0; i < NOMAPS; i++) {
     va = p->mfiles[i].va;
+    if (!va)
+      continue;
     fsize = p->ofile[p->mfiles[i].fd]->ip->size;
     if (va <= addr && addr < va + PGROUNDUP(fsize)) {
       return 1;
     }
   }
   return 0;
+}
+
+int
+getmappedaddr(uint64 addr)
+{
+  struct proc *p = myproc();
+  uint64 va, fsize;
+
+  for (int i = 0; i < NOMAPS; i++) {
+    va = p->mfiles[i].va;
+    if (!va)
+      continue;
+    fsize = p->ofile[p->mfiles[i].fd]->ip->size;
+    if (va <= addr && addr < va + PGROUNDUP(fsize)) {
+      return i;
+    }
+  }
+  return -1;
 }
 
 //
@@ -85,9 +105,15 @@ usertrap(void)
 
     syscall();
   } else if((r_scause() == 13 || r_scause() == 15) && validmappedaddr(r_stval())){
-    printf("Loading file content into user space (TODO implement)\n");
-    //TODO: implement this
-    setkilled(p); // TODO: remove this after implement dynamic file loading
+    char *pa = kalloc();
+    mappages(p->pagetable, PGROUNDDOWN(r_stval()), PGSIZE, (uint64)pa, PTE_W);
+    int md = getmappedaddr(r_stval());
+    if(md == -1)
+      panic("mapped file not found");
+
+    int fd = p->mfiles[md].fd;
+    ilock(p->ofile[fd]->ip);
+    readi(p->ofile[fd]->ip, 1, PGROUNDDOWN(r_stval()), 0, PGSIZE);
   } else if((which_dev = devintr()) != 0){
     // ok
   } else {
