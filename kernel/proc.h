@@ -81,11 +81,11 @@ struct trapframe {
 
 enum procstate { UNUSED, USED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
-//mapped files
+// Mapped files
 struct filemap {
-  uint64 va;          // base virtual address
-  int fd;             // process corresponding file descriptor
-  int w;              // write permissions flag
+  uint64 va;          // Base virtual address
+  int fd;             // Process corresponding file descriptor
+  int perm;           // Permission flags
 };
 
 // Per-process state
