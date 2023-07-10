@@ -517,7 +517,7 @@ mfilealloc(struct proc *p, int fd)
   }
   
   p->mfiles[i].va = p->sz;
-  p->mfiles[i].w = 1;     //TODO: see what should be assigned
+  p->mfiles[i].perm = PTE_W;  //TODO: see what should be assigned
   p->mfiles[i].fd = fd;
   int fsize = p->ofile[fd]->ip->size;
   printf("file size: %d, proc size: %d\n", fsize, p->sz);
@@ -538,7 +538,9 @@ sys_mmap(void)
     return 0;
   }
 
-  printf("fd: %d - file: %p\n", fd, f);
+  if (p->ofile[fd] == 0) {
+    return 0;
+  }
 
   return mfilealloc(p, fd);
 }
