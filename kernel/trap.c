@@ -33,19 +33,18 @@ trapinithart(void)
 }
 
 int
-getmd(uint64 addr)
+getmd(uint64 addr) // TODO: Remove duplication
 {
   struct proc *p = myproc();
   uint64 va, fsize;
 
-  for (int md = 0; md < NOMAPS; md++) {
+  for(int md = 0; md < NOMAPS; md++) {
     va = p->mfiles[md].va;
     if(!va)
       continue;
     fsize = p->ofile[p->mfiles[md].fd]->ip->size;
-    if(va <= addr && addr < va + PGROUNDUP(fsize)) {
+    if(va <= addr && addr < va + PGROUNDUP(fsize))
       return md;
-    }
   }
   return -1;
 }
