@@ -33,25 +33,7 @@ trapinithart(void)
 }
 
 int
-validmappedaddr(uint64 addr)
-{
-  struct proc *p = myproc();
-  uint64 va, fsize;
-
-  for (int i = 0; i < NOMAPS; i++) {
-    va = p->mfiles[i].va;
-    if (!va)
-      continue;
-    fsize = p->ofile[p->mfiles[i].fd]->ip->size;
-    if (va <= addr && addr < va + PGROUNDUP(fsize)) {
-      return 1;
-    }
-  }
-  return 0;
-}
-
-int
-getmappedaddr(uint64 addr)
+getmd(uint64 addr)
 {
   struct proc *p = myproc();
   uint64 va, fsize;
@@ -75,7 +57,7 @@ getmappedaddr(uint64 addr)
 void
 usertrap(void)
 {
-  int which_dev = 0;
+  int which_dev = 0, md;
 
   if((r_sstatus() & SSTATUS_SPP) != 0)
     panic("usertrap: not from user mode");
@@ -104,16 +86,21 @@ usertrap(void)
     intr_on();
 
     syscall();
-  } else if((r_scause() == 13 || r_scause() == 15) && validmappedaddr(r_stval())){
-    char *pa = kalloc();
-    mappages(p->pagetable, PGROUNDDOWN(r_stval()), PGSIZE, (uint64)pa, PTE_W);
-    int md = getmappedaddr(r_stval());
+  } else if((r_scause() == 13 || r_scause() == 15) && (md = getmd(r_stval()) != -1)){
     if(md == -1)
       panic("mapped file not found");
+    printf("mapping and loading file content\n");
 
-    int fd = p->mfiles[md].fd;
-    ilock(p->ofile[fd]->ip);
-    readi(p->ofile[fd]->ip, 1, PGROUNDDOWN(r_stval()), 0, PGSIZE);
+    char *pa = kalloc();
+    int perm = p->mfiles[md].w ? PTE_R|PTE_W|PTE_U : PTE_R|PTE_U;
+    if (mappages(p->pagetable, PGROUNDDOWN(r_stval()), PGSIZE, (uint64)pa, perm) == -1) {
+      setkilled(p);
+    } else {
+      int fd = p->mfiles[md].fd;
+      ilock(p->ofile[fd]->ip);
+      readi(p->ofile[fd]->ip, 1, PGROUNDDOWN(r_stval()), r_stval() - PGROUNDDOWN(r_stval()), PGSIZE);
+      iunlock(p->ofile[fd]->ip);
+    }
   } else if((which_dev = devintr()) != 0){
     // ok
   } else {
