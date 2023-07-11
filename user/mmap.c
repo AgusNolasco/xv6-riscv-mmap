@@ -14,8 +14,10 @@ int main()
   printf("file[3]: %c\n", addr[3]);
   printf("file[4]: %c\n", addr[4]);
   printf("file[4095]: %c\n", addr[4095]);
-  printf("file[4096]: %c\n", addr[4096]);
-  printf("file[4097]: %c\n", addr[4097]);
+  addr[5] = 'c';
+  addr[6] = '\0';
+  printf("munmap: %d\n", munmap(addr));
+  // printf("file[0]: %c\n", addr[0]); // this produce a pagefault as expected
   printf("munmap: %d\n", munmap(addr));
   return 0;
 }
