@@ -512,9 +512,8 @@ mfilealloc(struct proc *p, int fd)
     if(!p->mfiles[i].va)
       break;
 
-  if(i == NOMAPS) {
+  if(i == NOMAPS)
     return 0;
-  }
   
   p->mfiles[i].va = p->sz;
   p->mfiles[i].perm = PTE_W;  //TODO: see what should be assigned
@@ -530,26 +529,63 @@ mfilealloc(struct proc *p, int fd)
 uint64
 sys_mmap(void)
 {
+  struct proc *p = myproc();
   struct file *f;
   int fd;
-  struct proc *p = myproc();
 
-  if(argfd(0, &fd, &f) < 0) {
+  if(argfd(0, &fd, &f) < 0)
     return 0;
-  }
 
-  if (p->ofile[fd] == 0) {
+  if (p->ofile[fd] == 0)
     return 0;
-  }
 
   return mfilealloc(p, fd);
+}
+
+static int
+getmd(uint64 addr) // TODO: remove duplication
+{
+  struct proc *p = myproc();
+  uint64 va, fsize;
+
+  for (int md = 0; md < NOMAPS; md++) {
+    va = p->mfiles[md].va;
+    if(!va)
+      continue;
+    fsize = p->ofile[p->mfiles[md].fd]->ip->size;
+    if(va <= addr && addr < va + PGROUNDUP(fsize)) {
+      return md;
+    }
+  }
+  return -1;
 }
 
 uint64
 sys_munmap(void)
 {
-  uint64 addr;
-  argaddr(0, &addr);
-  printf("addr: %p\n", addr);
+  struct proc *p = myproc();
+  uint64 va;
+  argaddr(0, &va);
+
+  // This could be extracted into a proceduce
+  // Write the pages changed
+
+  // This could be extracted into a procedure
+  uint64 a = PGROUNDDOWN(va);
+  int md;
+  if((md = getmd(va)) == -1)
+    return -1;
+  int fd = p->mfiles[md].fd;
+  if(p->ofile[fd] == 0)
+    return -1;
+  int fsize = p->ofile[fd]->ip->size;
+  printf("unmapping %d pages\n", PGROUNDUP(fsize)/PGSIZE);
+  pte_t *pte = walk(p->pagetable, va, 0);
+  printf("pte va: %p\n", pte);
+  printf("pte va flags: %d\n", PTE_FLAGS(*pte));
+  printf("dirty bit: %d\n", (PTE_D & (*pte)) != 0);
+  uvmunmap(p->pagetable, a, PGROUNDUP(fsize)/PGSIZE, 1);
+  p->mfiles[md].va = 0;
+  p->mfiles[md].fd = 0;
   return 0;
 }
