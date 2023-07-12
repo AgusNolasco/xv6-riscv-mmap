@@ -560,15 +560,22 @@ getmd(uint64 addr) // TODO: remove duplication
   return -1;
 }
 
+void
+savechanges(pte_t *pte, struct inode* ip, uint64 va, uint64 baseva) {
+  if (!(PTE_D & (*pte)))  //dirty bit is zero
+    return;
+  int offset = va - baseva;
+  ilock(ip);
+  writei(ip, 1, va, offset, PGSIZE);
+  iunlock(ip);
+}
+
 uint64
 sys_munmap(void)
 {
   struct proc *p = myproc();
   uint64 va;
   argaddr(0, &va);
-
-  // This could be extracted into a proceduce
-  // Write the pages changed
 
   // This could be extracted into a procedure
   uint64 a = PGROUNDDOWN(va);
@@ -581,6 +588,7 @@ sys_munmap(void)
   int fsize = p->ofile[fd]->ip->size;
   printf("unmapping %d pages\n", PGROUNDUP(fsize)/PGSIZE);
   pte_t *pte = walk(p->pagetable, va, 0);
+  savechanges(pte, p->ofile[fd]->ip, PGROUNDUP(a) - 1, p->mfiles[md].va);
   printf("pte va: %p\n", pte);
   printf("pte va flags: %d\n", PTE_FLAGS(*pte));
   printf("dirty bit: %d\n", (PTE_D & (*pte)) != 0);
