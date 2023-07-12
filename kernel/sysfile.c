@@ -561,13 +561,13 @@ getmd(uint64 addr) // TODO: remove duplication
 }
 
 void
-savechanges(pte_t *pte, struct inode* ip, uint64 va, uint64 baseva) {
-  if (!(PTE_D & (*pte)))  //dirty bit is zero
-    return;
-  int offset = va - baseva;
+savechanges(struct inode* ip, uint64 va, int offset, int n)
+{
+  begin_op();
   ilock(ip);
-  writei(ip, 1, va, offset, PGSIZE);
+  writei(ip, 1, va, offset, n);
   iunlock(ip);
+  end_op();
 }
 
 uint64
@@ -577,22 +577,28 @@ sys_munmap(void)
   uint64 va;
   argaddr(0, &va);
 
-  // This could be extracted into a procedure
-  uint64 a = PGROUNDDOWN(va);
   int md;
   if((md = getmd(va)) == -1)
+    return -1;
+  if(va != p->mfiles[md].va) // The given address should be exactly the base address
     return -1;
   int fd = p->mfiles[md].fd;
   if(p->ofile[fd] == 0)
     return -1;
   int fsize = p->ofile[fd]->ip->size;
-  printf("unmapping %d pages\n", PGROUNDUP(fsize)/PGSIZE);
-  pte_t *pte = walk(p->pagetable, va, 0);
-  savechanges(pte, p->ofile[fd]->ip, PGROUNDUP(a) - 1, p->mfiles[md].va);
-  printf("pte va: %p\n", pte);
-  printf("pte va flags: %d\n", PTE_FLAGS(*pte));
-  printf("dirty bit: %d\n", (PTE_D & (*pte)) != 0);
-  uvmunmap(p->pagetable, a, PGROUNDUP(fsize)/PGSIZE, 1);
+  for(int offset = 0; offset < fsize; offset += PGSIZE) {
+    pte_t *pte = walk(p->pagetable, va + offset, 0);
+    if(!(PTE_D & (*pte))){  // Dirty bit is zero
+      printf("Ignoring changes from pte: %p\n", pte);
+      continue;
+    }
+    int a = p->mfiles[md].va + offset;
+    if(offset + PGSIZE > fsize) // Last page
+      savechanges(p->ofile[fd]->ip, a, offset, fsize - offset);
+    else
+      savechanges(p->ofile[fd]->ip, a, offset, PGSIZE);
+  }
+  uvmunmap(p->pagetable, va, PGROUNDUP(fsize)/PGSIZE, 1);
   p->mfiles[md].va = 0;
   p->mfiles[md].fd = 0;
   return 0;
