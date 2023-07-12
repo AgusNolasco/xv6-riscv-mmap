@@ -3,6 +3,8 @@
 #include "user/user.h"
 #include "kernel/fcntl.h"
 
+#define PGSIZE 4096
+
 int main()
 {
   const char *filename = "testdata.txt"; 
@@ -17,17 +19,23 @@ int main()
 
     f = open(filename, O_RDWR | O_CREATE);
     write(f, str1, l);
-    for (i=l; i<4096; i++)
+    for (i=l; i<PGSIZE; i++)
         write(f, &zero, 1);
     write(f, str2, strlen(str2)+1);
   }
 
   char* addr = mmap(f);
   printf("mmap: %d\n", addr);
-  printf("file[0]: %c\n", addr[0]);
-  printf("file[4096]: %c\n", addr[4096]);
   printf("str[0]: %s\n", addr);
-  printf("str[1]: %s\n", &addr[4096]);
+  printf("str[1]: %s\n", &addr[PGSIZE]);
+
+  int l = strlen(addr);
+  printf("addr len: %d\n", l);
+  //for(int i = l; i < PGSIZE; i++)
+  //    addr[i] = 'X';
+
+  addr[PGSIZE] = 'i';
+
   printf("munmap: %d\n", munmap(addr));
   return 0;
 }
