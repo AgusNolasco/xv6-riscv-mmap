@@ -40,9 +40,7 @@ mfilealloc(struct proc *p, int fd)
   p->mfile[md].perm = PTE_W;  //TODO: see what should be assigned
   p->mfile[md].fd = fd;
   int fsize = p->ofile[fd]->ip->size;
-  printf("file size: %d, proc size: %d\n", fsize, p->sz);
   p->sz += PGROUNDUP(fsize);
-  printf("updated proc size: %d\n", p->sz);
   
   return p->mfile[md].va;
 }
