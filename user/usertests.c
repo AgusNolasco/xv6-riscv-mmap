@@ -2571,6 +2571,16 @@ badarg(char *s)
   exit(0);
 }
 
+void
+createmap(char *s)
+{
+  int fd = open("testdata.txt", O_CREATE | O_RDONLY);
+  char *file = mmap(fd);
+  if(!file)
+    exit(1);
+  exit(0);
+}
+
 struct test {
   void (*f)(char *);
   char *s;
@@ -2635,6 +2645,7 @@ struct test {
   {sbrklast, "sbrklast"},
   {sbrk8000, "sbrk8000"},
   {badarg, "badarg" },
+  {createmap, "createmap" },
 
   { 0, 0},
 };
