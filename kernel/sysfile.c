@@ -592,7 +592,7 @@ sys_munmap(void)
       printf("Ignoring changes from pte: %p\n", pte);
       continue;
     }
-    int a = p->mfiles[md].va + offset;
+    int a = va + offset;
     if(offset + PGSIZE > fsize) // Last page
       savechanges(p->ofile[fd]->ip, a, offset, fsize - offset);
     else
