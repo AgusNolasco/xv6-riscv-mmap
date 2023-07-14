@@ -82,7 +82,7 @@ struct trapframe {
 enum procstate { UNUSED, USED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
 // Mapped files
-struct filemap {
+struct mapfile {
   uint64 va;          // Base virtual address
   int fd;             // Process corresponding file descriptor
   int perm;           // Permission flags
@@ -111,5 +111,5 @@ struct proc {
   struct file *ofile[NOFILE];         // Open files
   struct inode *cwd;                  // Current directory
   char name[16];                      // Process name (debugging)
-  struct filemap mfiles[NOMAPS];      // Process maped files
+  struct mapfile mfile[NOMAPS];       // Process mapped files
 };

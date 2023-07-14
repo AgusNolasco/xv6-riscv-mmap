@@ -504,28 +504,6 @@ sys_pipe(void)
   return 0;
 }
 
-int
-mfilealloc(struct proc *p, int fd) 
-{
-  int i;
-  for(i = 0; i < NOMAPS; i++)
-    if(!p->mfiles[i].va)
-      break;
-
-  if(i == NOMAPS)
-    return 0;
-  
-  p->mfiles[i].va = p->sz;
-  p->mfiles[i].perm = PTE_W;  //TODO: see what should be assigned
-  p->mfiles[i].fd = fd;
-  int fsize = p->ofile[fd]->ip->size;
-  printf("file size: %d, proc size: %d\n", fsize, p->sz);
-  p->sz += PGROUNDUP(fsize);
-  printf("updated proc size: %d\n", p->sz);
-  
-  return p->mfiles[i].va;
-}
-
 uint64
 sys_mmap(void)
 {
@@ -542,34 +520,6 @@ sys_mmap(void)
   return mfilealloc(p, fd);
 }
 
-static int
-getmd(uint64 addr) // TODO: remove duplication
-{
-  struct proc *p = myproc();
-  uint64 va, fsize;
-
-  for (int md = 0; md < NOMAPS; md++) {
-    va = p->mfiles[md].va;
-    if(!va)
-      continue;
-    fsize = p->ofile[p->mfiles[md].fd]->ip->size;
-    if(va <= addr && addr < va + PGROUNDUP(fsize)) {
-      return md;
-    }
-  }
-  return -1;
-}
-
-void
-savechanges(struct inode* ip, uint64 va, int offset, int n)
-{
-  begin_op();
-  ilock(ip);
-  writei(ip, 1, va, offset, n);
-  iunlock(ip);
-  end_op();
-}
-
 uint64
 sys_munmap(void)
 {
@@ -580,26 +530,15 @@ sys_munmap(void)
   int md;
   if((md = getmd(va)) == -1)
     return -1;
-  if(va != p->mfiles[md].va) // The given address should be exactly the base address
+  if(va != p->mfile[md].va) // The given address should be exactly the base address
     return -1;
-  int fd = p->mfiles[md].fd;
+  int fd = p->mfile[md].fd;
   if(p->ofile[fd] == 0)
     return -1;
   int fsize = p->ofile[fd]->ip->size;
-  for(int offset = 0; offset < fsize; offset += PGSIZE) {
-    pte_t *pte = walk(p->pagetable, va + offset, 0);
-    if(!(PTE_D & (*pte))){  // Dirty bit is zero
-      printf("Ignoring changes from pte: %p\n", pte);
-      continue;
-    }
-    int a = va + offset;
-    if(offset + PGSIZE > fsize) // Last page
-      savechanges(p->ofile[fd]->ip, a, offset, fsize - offset);
-    else
-      savechanges(p->ofile[fd]->ip, a, offset, PGSIZE);
-  }
+  checkmodif(fsize, p->ofile[fd]->ip, p->pagetable, va);
   uvmunmap(p->pagetable, va, PGROUNDUP(fsize)/PGSIZE, 1);
-  p->mfiles[md].va = 0;
-  p->mfiles[md].fd = 0;
+  p->mfile[md].va = 0;
+  p->mfile[md].fd = 0;
   return 0;
 }

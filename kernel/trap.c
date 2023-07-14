@@ -32,41 +32,6 @@ trapinithart(void)
   w_stvec((uint64)kernelvec);
 }
 
-int
-getmd(uint64 addr) // TODO: Remove duplication
-{
-  struct proc *p = myproc();
-  uint64 va, fsize;
-
-  for(int md = 0; md < NOMAPS; md++) {
-    va = p->mfiles[md].va;
-    if(!va)
-      continue;
-    fsize = p->ofile[p->mfiles[md].fd]->ip->size;
-    if(va <= addr && addr < va + PGROUNDUP(fsize))
-      return md;
-  }
-  return -1;
-}
-
-int
-mapfile(struct proc *p, int md, uint64 va)
-{
-    char *pa;
-    if((pa = kalloc()) == 0)
-      return -1;
-    int perm = p->mfiles[md].perm | PTE_R | PTE_U;
-    uint64 a = PGROUNDDOWN(va);
-    if(mappages(p->pagetable, a, PGSIZE, (uint64)pa, perm) == -1)
-      return -1;
-    int fd = p->mfiles[md].fd;
-    int offset = a - p->mfiles[md].va;
-    ilock(p->ofile[fd]->ip);
-    readi(p->ofile[fd]->ip, 1, a, offset, PGSIZE);
-    iunlock(p->ofile[fd]->ip);
-    return 0;
-}
-
 //
 // handle an interrupt, exception, or system call from user space.
 // called from trampoline.S
@@ -104,7 +69,7 @@ usertrap(void)
 
     syscall();
   } else if((r_scause() == 13 || r_scause() == 15) && ((md = getmd(r_stval())) != -1)){
-    if(mapfile(p, md, r_stval()) != 0)
+    if(loadblock(p, md, r_stval()) != 0)
       setkilled(p);
   } else if((which_dev = devintr()) != 0){
     // ok
