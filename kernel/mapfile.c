@@ -79,10 +79,8 @@ void
 checkmodif(int fsize, struct inode *ip, pagetable_t pagetable, uint64 va) {
   for(int offset = 0; offset < fsize; offset += PGSIZE) {
     pte_t *pte = walk(pagetable, va + offset, 0);
-    if(!(PTE_D & (*pte))){  // Dirty bit is zero
-      printf("Ignoring changes from pte: %p\n", pte);
+    if(!(PTE_D & (*pte)))  // Dirty bit is zero
       continue;
-    }
     int a = va + offset;
     if(offset + PGSIZE > fsize) // Last page
       savechanges(ip, a, offset, fsize - offset);

@@ -530,11 +530,14 @@ sys_munmap(void)
   int md;
   if((md = getmd(va)) == -1)
     return -1;
+
   if(va != p->mfile[md].va) // The given address should be exactly the base address
     return -1;
+
   int fd = p->mfile[md].fd;
   if(p->ofile[fd] == 0)
     return -1;
+
   int fsize = p->ofile[fd]->ip->size;
   checkmodif(fsize, p->ofile[fd]->ip, p->pagetable, va);
   uvmunmap(p->pagetable, va, PGROUNDUP(fsize)/PGSIZE, 1);
