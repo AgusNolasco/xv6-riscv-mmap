@@ -2581,10 +2581,36 @@ createmap(char *s)
   exit(0);
 }
 
+void
+createmapofdevices(char *s)
+{
+  char *a1 = mmap(0);
+  char *a2 = mmap(1);
+  char *a3 = mmap(2);
+  if(a1 == a2 && a2 == a3)
+    exit(0);
+  exit(1);
+}
+
+void
+createmapfail(char *s)
+{
+  for(int fd = -2; fd < 0; fd++)
+    if(mmap(fd))
+      exit(1);
+  for(int fd = 3; fd < 10; fd++) // 0, 1 and 2 are stdio devices
+    if(mmap(fd))
+      exit(1);
+  exit(0);
+}
+
 struct test {
   void (*f)(char *);
   char *s;
 } quicktests[] = {
+  {createmap, "createmap" },
+  {createmapfail, "createmapfail" },
+  {createmapofdevices, "createmapofdevices" },
   {copyin, "copyin"},
   {copyout, "copyout"},
   {copyinstr1, "copyinstr1"},
@@ -2645,7 +2671,6 @@ struct test {
   {sbrklast, "sbrklast"},
   {sbrk8000, "sbrk8000"},
   {badarg, "badarg" },
-  {createmap, "createmap" },
 
   { 0, 0},
 };
