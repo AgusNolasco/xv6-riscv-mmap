@@ -2604,6 +2604,49 @@ createmapfail(char *s)
   exit(0);
 }
 
+void
+mapsize0(char *s)
+{
+  int fd = open("empty1.txt", O_CREATE | O_RDONLY);
+  char *file = mmap(fd);
+  if(!file)
+    exit(1);
+
+  if(munmap(file))
+    exit(1);
+
+  exit(0);
+}
+
+void
+multiplemapsize0(char *s)
+{
+  int fd1 = open("empty1.txt", O_CREATE | O_RDONLY);
+  int fd2 = open("empty2.txt", O_CREATE | O_RDONLY);
+  int fd3 = open("empty3.txt", O_CREATE | O_RDONLY);
+  char *file1 = mmap(fd1);
+  char *file2 = mmap(fd2);
+  char *file3 = mmap(fd3);
+  if(!file1){
+    exit(1);
+  }
+  if(!file2){
+    exit(1);
+  }
+  if(!file3){
+    exit(1);
+  }
+
+  if(munmap(file1))
+    exit(1);
+  if(munmap(file2))
+    exit(1);
+  if(munmap(file3))
+    exit(1);
+
+  exit(0);
+}
+
 struct test {
   void (*f)(char *);
   char *s;
@@ -2611,6 +2654,8 @@ struct test {
   {createmap, "createmap" },
   {createmapfail, "createmapfail" },
   {createmapofdevices, "createmapofdevices" },
+  {mapsize0, "mapsize0" },
+  {multiplemapsize0, "multiplemapsize0" },
   {copyin, "copyin"},
   {copyout, "copyout"},
   {copyinstr1, "copyinstr1"},

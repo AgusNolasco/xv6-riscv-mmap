@@ -19,6 +19,8 @@ getmd(uint64 addr)
     if(!va)
       continue;
     fsize = p->ofile[p->mfile[md].fd]->ip->size;
+    if(!fsize)
+      return md;
     if(va <= addr && addr < va + PGROUNDUP(fsize))
       return md;
   }
