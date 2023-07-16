@@ -2627,21 +2627,34 @@ multiplemapsize0(char *s)
   char *file1 = mmap(fd1);
   char *file2 = mmap(fd2);
   char *file3 = mmap(fd3);
-  if(!file1){
+  if(!file1)
     exit(1);
-  }
-  if(!file2){
+  if(!file2)
     exit(1);
-  }
-  if(!file3){
+  if(!file3)
     exit(1);
-  }
 
   if(munmap(file1))
     exit(1);
   if(munmap(file2))
     exit(1);
   if(munmap(file3))
+    exit(1);
+
+  exit(0);
+}
+
+void
+unmapsize0twicefails(char *s)
+{
+  int fd = open("empty.txt", O_CREATE | O_RDONLY);
+  char *file = mmap(fd);
+  if(!file)
+    exit(1);
+  
+  if(munmap(file))
+    exit(1);
+  if(!munmap(file))
     exit(1);
 
   exit(0);
@@ -2656,6 +2669,7 @@ struct test {
   {createmapofdevices, "createmapofdevices" },
   {mapsize0, "mapsize0" },
   {multiplemapsize0, "multiplemapsize0" },
+  {unmapsize0twicefails, "unmapsize0twicefails" },
   {copyin, "copyin"},
   {copyout, "copyout"},
   {copyinstr1, "copyinstr1"},
