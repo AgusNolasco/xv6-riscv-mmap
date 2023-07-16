@@ -12,15 +12,17 @@ int
 getmd(uint64 addr)
 {
   struct proc *p = myproc();
+  struct file *f;
   uint64 va, fsize;
 
   for (int md = 0; md < NOMAPS; md++) {
     va = p->mfile[md].va;
     if(!va)
       continue;
-    fsize = p->ofile[p->mfile[md].fd]->ip->size;
-    if(!fsize)
-      return md;
+    f = p->ofile[p->mfile[md].fd];
+    if(!f)
+      continue;
+    fsize = f->ip->size;
     if(va <= addr && addr < va + PGROUNDUP(fsize))
       return md;
   }
@@ -36,7 +38,7 @@ mfilealloc(struct proc *p, int fd)
       break;
 
   if(md == NOMAPS)
-    return 0;
+    return -1;
   
   p->mfile[md].va = p->sz;
   p->mfile[md].perm = PTE_W;  //TODO: see what should be assigned

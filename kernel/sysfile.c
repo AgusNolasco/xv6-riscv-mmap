@@ -512,10 +512,13 @@ sys_mmap(void)
   int fd;
 
   if(argfd(0, &fd, &f) < 0)
-    return 0;
+    return -1;
 
-  if (p->ofile[fd] == 0)
-    return 0;
+  if(p->ofile[fd] == 0)
+    return -1;
+
+  if(p->ofile[fd]->ip->size == 0)
+    return -1;
 
   return mfilealloc(p, fd);
 }

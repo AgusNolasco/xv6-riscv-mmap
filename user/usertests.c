@@ -2571,35 +2571,45 @@ badarg(char *s)
   exit(0);
 }
 
-void
-createmap(char *s)
+int
+createfile()
 {
-  int fd = open("testdata.txt", O_CREATE | O_RDONLY);
+  int fd = open("testdata.txt", O_CREATE | O_RDWR);
+  const char* str = "hello";
+  int l = strlen(str);
+  write(fd, str, l);
+  close(fd);
+  return open("testdata.txt", O_CREATE | O_RDWR);
+}
+
+void
+map(char *s)
+{
+  int fd = createfile();
   char *file = mmap(fd);
-  if(!file)
+  if(file == MAP_FAILED)
     exit(1);
   exit(0);
 }
 
 void
-createmapofdevices(char *s)
+mapofdevices(char *s)
 {
   char *a1 = mmap(0);
   char *a2 = mmap(1);
   char *a3 = mmap(2);
+  if(a1 != MAP_FAILED)
+    exit(1);
   if(a1 == a2 && a2 == a3)
     exit(0);
   exit(1);
 }
 
 void
-createmapfail(char *s)
+mapfail(char *s)
 {
-  for(int fd = -2; fd < 0; fd++)
-    if(mmap(fd))
-      exit(1);
-  for(int fd = 3; fd < 10; fd++) // 0, 1 and 2 are stdio devices
-    if(mmap(fd))
+  for(int fd = -2; fd < 10; fd++)
+    if(mmap(fd) != MAP_FAILED)
       exit(1);
   exit(0);
 }
@@ -2609,15 +2619,12 @@ mapsize0(char *s)
 {
   int fd = open("empty1.txt", O_CREATE | O_RDONLY);
   char *file = mmap(fd);
-  if(!file)
+  if(file != MAP_FAILED)
     exit(1);
-
-  if(munmap(file))
-    exit(1);
-
   exit(0);
 }
 
+/*
 void
 multiplemapsize0(char *s)
 {
@@ -2659,17 +2666,43 @@ unmapsize0twicefails(char *s)
 
   exit(0);
 }
+*/
+
+/*
+void
+unmap(char *s)
+{
+  int fd = open("testdata.txt", O_CREATE | O_RDONLY);
+  char *file = mmap(fd);
+  if(file != MAP_FAILED)
+    exit(1);
+  exit(0);
+}
+*/
+
+void
+unmapinvalidaddr(char *s)
+{
+  int invalid_fd = 10;
+  char* addr = mmap(invalid_fd);
+  if(addr != MAP_FAILED)
+    exit(1);
+  if(munmap(addr) == 0)
+    exit(1);
+  exit(0);
+}
 
 struct test {
   void (*f)(char *);
   char *s;
 } quicktests[] = {
-  {createmap, "createmap" },
-  {createmapfail, "createmapfail" },
-  {createmapofdevices, "createmapofdevices" },
+  {map, "map" },
+  {mapfail, "mapfail" },
+  {mapofdevices, "mapofdevices" },
   {mapsize0, "mapsize0" },
-  {multiplemapsize0, "multiplemapsize0" },
-  {unmapsize0twicefails, "unmapsize0twicefails" },
+  //{multiplemapsize0, "multiplemapsize0" },
+  //{unmapsize0twicefails, "unmapsize0twicefails" },
+  {unmapinvalidaddr, "unmapinvalidaddr"},
   {copyin, "copyin"},
   {copyout, "copyout"},
   {copyinstr1, "copyinstr1"},
