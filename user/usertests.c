@@ -2572,20 +2572,23 @@ badarg(char *s)
 }
 
 int
-createfile()
+createreadablefile()
 {
-  int fd = open("testdata.txt", O_CREATE | O_RDWR);
+  int fd;
+  if((fd = open("onlyreadabletestdata.txt", O_RDONLY)) != -1)
+    return fd;
+  fd = open("onlyreadabletestdata.txt", O_CREATE | O_RDWR);
   const char* str = "hello";
   int l = strlen(str);
   write(fd, str, l);
   close(fd);
-  return open("testdata.txt", O_CREATE | O_RDWR);
+  return open("onlyreadabletestdata.txt", O_RDONLY);
 }
 
 void
 map(char *s)
 {
-  int fd = createfile();
+  int fd = createreadablefile();
   char *file = mmap(fd);
   if(file == MAP_FAILED)
     exit(1);
@@ -2668,17 +2671,19 @@ unmapsize0twicefails(char *s)
 }
 */
 
-/*
 void
 unmap(char *s)
 {
-  int fd = open("testdata.txt", O_CREATE | O_RDONLY);
+  int fd = createreadablefile();
   char *file = mmap(fd);
-  if(file != MAP_FAILED)
+  if(file == MAP_FAILED)
+    exit(1);
+  if(file[0] != 'h' || file[1] != 'e' || file[2] != 'l' || file[3] != 'l' || file[4] != 'o')
+    exit(1);
+  if(munmap(file) != 0)
     exit(1);
   exit(0);
 }
-*/
 
 void
 unmapinvalidaddr(char *s)
@@ -2702,6 +2707,7 @@ struct test {
   {mapsize0, "mapsize0" },
   //{multiplemapsize0, "multiplemapsize0" },
   //{unmapsize0twicefails, "unmapsize0twicefails" },
+  {unmap, "unmap"},
   {unmapinvalidaddr, "unmapinvalidaddr"},
   {copyin, "copyin"},
   {copyout, "copyout"},
