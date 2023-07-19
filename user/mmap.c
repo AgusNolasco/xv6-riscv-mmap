@@ -2,6 +2,7 @@
 #include "kernel/stat.h"
 #include "user/user.h"
 #include "kernel/fcntl.h"
+#include "kernel/riscv.h"
 
 int main()
 {
@@ -9,11 +10,11 @@ int main()
   printf("fd = %d\n", fd);
 
   for(int i = -2; i < fd; i++)
-    printf("fd %d -> %p\n", i, mmap(i));
+    printf("fd %d -> %p\n", i, mmap(i, 0));
 
   char *addr, *addr2;
-  printf("addr: %p\n", addr = mmap(fd));
-  printf("addr2: %p\n", addr2 = mmap(fd));
+  printf("addr: %p\n", addr = mmap(fd, PTE_R | PTE_W));
+  printf("addr2: %p\n", addr2 = mmap(fd, 0));
   printf("mmap: %d\n", addr);
   printf("file[0]: %c\n", addr[0]);
   printf("file[1]: %c\n", addr[1]);

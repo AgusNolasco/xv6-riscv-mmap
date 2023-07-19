@@ -30,7 +30,7 @@ getmd(uint64 addr)
 }
 
 int
-mfilealloc(struct proc *p, int fd) 
+mfilealloc(struct proc *p, int fd, int perm) 
 {
   int md;
   for(md = 0; md < NOMAPS; md++)
@@ -41,11 +41,11 @@ mfilealloc(struct proc *p, int fd)
     return -1;
   
   p->mfile[md].va = p->sz;
-  p->mfile[md].perm = PTE_W;  //TODO: see what should be assigned
+  p->mfile[md].perm = perm;
   p->mfile[md].fd = fd;
   int fsize = p->ofile[fd]->ip->size;
   p->sz += PGROUNDUP(fsize);
-  
+
   return p->mfile[md].va;
 }
 
@@ -55,7 +55,7 @@ loadblock(struct proc *p, int md, uint64 va)
   char *pa;
   if((pa = kalloc()) == 0)
     return -1;
-  int perm = p->mfile[md].perm | PTE_R | PTE_U;
+  int perm = p->mfile[md].perm | PTE_U;
   uint64 a = PGROUNDDOWN(va);
   if(mappages(p->pagetable, a, PGSIZE, (uint64)pa, perm) == -1)
     return -1;

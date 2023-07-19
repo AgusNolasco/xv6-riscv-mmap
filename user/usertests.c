@@ -2589,7 +2589,7 @@ void
 map(char *s)
 {
   int fd = createreadablefile();
-  char *file = mmap(fd);
+  char *file = mmap(fd, 0);
   if(file == MAP_FAILED)
     exit(1);
   exit(0);
@@ -2598,9 +2598,9 @@ map(char *s)
 void
 mapofdevices(char *s)
 {
-  char *a1 = mmap(0);
-  char *a2 = mmap(1);
-  char *a3 = mmap(2);
+  char *a1 = mmap(0, 0);
+  char *a2 = mmap(1, 0);
+  char *a3 = mmap(2, 0);
   if(a1 != MAP_FAILED)
     exit(1);
   if(a1 == a2 && a2 == a3)
@@ -2612,7 +2612,7 @@ void
 mapfail(char *s)
 {
   for(int fd = -2; fd < 10; fd++)
-    if(mmap(fd) != MAP_FAILED)
+    if(mmap(fd, 0) != MAP_FAILED)
       exit(1);
   exit(0);
 }
@@ -2621,7 +2621,7 @@ void
 mapsize0(char *s)
 {
   int fd = open("empty1.txt", O_CREATE | O_RDONLY);
-  char *file = mmap(fd);
+  char *file = mmap(fd, 0);
   if(file != MAP_FAILED)
     exit(1);
   exit(0);
@@ -2634,9 +2634,9 @@ multiplemapsize0(char *s)
   int fd1 = open("empty1.txt", O_CREATE | O_RDONLY);
   int fd2 = open("empty2.txt", O_CREATE | O_RDONLY);
   int fd3 = open("empty3.txt", O_CREATE | O_RDONLY);
-  char *file1 = mmap(fd1);
-  char *file2 = mmap(fd2);
-  char *file3 = mmap(fd3);
+  char *file1 = mmap(fd1, 0);
+  char *file2 = mmap(fd2, 0);
+  char *file3 = mmap(fd3, 0);
   if(!file1)
     exit(1);
   if(!file2)
@@ -2658,7 +2658,7 @@ void
 unmapsize0twicefails(char *s)
 {
   int fd = open("empty.txt", O_CREATE | O_RDONLY);
-  char *file = mmap(fd);
+  char *file = mmap(fd, 0);
   if(!file)
     exit(1);
   
@@ -2675,7 +2675,7 @@ void
 unmap(char *s)
 {
   int fd = createreadablefile();
-  char *file = mmap(fd);
+  char *file = mmap(fd, PTE_R);
   if(file == MAP_FAILED)
     exit(1);
   if(file[0] != 'h' || file[1] != 'e' || file[2] != 'l' || file[3] != 'l' || file[4] != 'o')
@@ -2689,7 +2689,7 @@ void
 unmapinvalidaddr(char *s)
 {
   int invalid_fd = 10;
-  char* addr = mmap(invalid_fd);
+  char* addr = mmap(invalid_fd, 0);
   if(addr != MAP_FAILED)
     exit(1);
   if(munmap(addr) == 0)

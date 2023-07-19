@@ -509,10 +509,11 @@ sys_mmap(void)
 {
   struct proc *p = myproc();
   struct file *f;
-  int fd;
+  int fd, perm;
 
   if(argfd(0, &fd, &f) < 0)
     return -1;
+  argint(1, &perm);
 
   if(p->ofile[fd] == 0)
     return -1;
@@ -520,7 +521,7 @@ sys_mmap(void)
   if(p->ofile[fd]->ip->size == 0)
     return -1;
 
-  return mfilealloc(p, fd);
+  return mfilealloc(p, fd, perm);
 }
 
 uint64
