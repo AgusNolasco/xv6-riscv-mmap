@@ -54,7 +54,7 @@ mfilealloc(struct proc *p, int fd, int perm)
 }
 
 static int
-checkperm(int perm, int cause) 
+isvalidperm(int perm, int cause) 
 {
   if(cause == WRITE && (perm & PROT_WRITE))
     return 1;
@@ -71,7 +71,7 @@ loadblock(struct proc *p, int md, uint64 va, int cause)
   // TODO: Ask why we need to set read perm, if we don't set it, a panic: remap will occur. 
   // In riscv priv docs, the scause 15 is an store or AMO. What AMO means? 
   // Seeing uvmalloc implementation, it always turns on the read bit.
-  if(checkperm(perm, cause) == 0)
+  if(!isvalidperm(perm, cause))
     return -1;
   if((pa = kalloc()) == 0)
     return -1;
