@@ -7,6 +7,10 @@
 #include "fs.h"
 #include "sleeplock.h"
 #include "file.h"
+#include "fcntl.h"
+
+#define READ  13
+#define WRITE 15
 
 int
 getmd(uint64 addr)
@@ -49,13 +53,28 @@ mfilealloc(struct proc *p, int fd, int perm)
   return p->mfile[md].va;
 }
 
+static int
+checkperm(int perm, int cause) 
+{
+  if(cause == WRITE && (perm & PROT_WRITE))
+    return 1;
+  if(cause == READ && (perm & PROT_READ))
+    return 1;
+  return 0;
+}
+
 int
-loadblock(struct proc *p, int md, uint64 va)
+loadblock(struct proc *p, int md, uint64 va, int cause)
 {
   char *pa;
+  int perm = p->mfile[md].perm | PTE_R | PTE_U; 
+  // TODO: Ask why we need to set read perm, if we don't set it, a panic: remap will occur. 
+  // In riscv priv docs, the scause 15 is an store or AMO. What AMO means? 
+  // Seeing uvmalloc implementation, it always turns on the read bit.
+  if(checkperm(perm, cause) == 0)
+    return -1;
   if((pa = kalloc()) == 0)
     return -1;
-  int perm = p->mfile[md].perm | PTE_U;
   uint64 a = PGROUNDDOWN(va);
   if(mappages(p->pagetable, a, PGSIZE, (uint64)pa, perm) == -1)
     return -1;
