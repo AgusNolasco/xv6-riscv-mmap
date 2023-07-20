@@ -2572,24 +2572,55 @@ badarg(char *s)
 }
 
 int
-createreadablefile()
+readablefile()
 {
+  const char *filename = "onlyreadabletestdata.txt";
   int fd;
-  if((fd = open("onlyreadabletestdata.txt", O_RDONLY)) != -1)
+  if((fd = open(filename, O_RDONLY)) != -1)
     return fd;
-  fd = open("onlyreadabletestdata.txt", O_CREATE | O_RDWR);
+  fd = open(filename, O_CREATE | O_RDWR);
   const char* str = "hello";
   int l = strlen(str);
   write(fd, str, l);
   close(fd);
-  return open("onlyreadabletestdata.txt", O_RDONLY);
+  return open(filename, O_RDONLY);
+}
+
+int
+writablefile()
+{
+  const char *filename = "onlywritabletestdata.txt";
+  int fd;
+  if((fd = open(filename, O_WRONLY)) != -1)
+    return fd;
+  fd = open(filename, O_CREATE | O_WRONLY);
+  const char* str = "hello";
+  int l = strlen(str);
+  write(fd, str, l);
+  close(fd);
+  return open(filename, O_WRONLY);
+}
+
+int
+readablewritablefile()
+{
+  const char *filename = "readablewritabletestdata.txt";
+  int fd;
+  if((fd = open(filename, O_RDWR)) != -1)
+    return fd;
+  fd = open(filename, O_CREATE | O_RDWR);
+  const char* str = "hello";
+  int l = strlen(str);
+  write(fd, str, l);
+  close(fd);
+  return open(filename, O_RDWR);
 }
 
 void
 map(char *s)
 {
-  int fd = createreadablefile();
-  char *file = mmap(fd, 0);
+  int fd = readablefile();
+  char *file = mmap(fd, PROT_NONE);
   if(file == MAP_FAILED)
     exit(1);
   exit(0);
@@ -2598,9 +2629,9 @@ map(char *s)
 void
 mapofdevices(char *s)
 {
-  char *a1 = mmap(0, 0);
-  char *a2 = mmap(1, 0);
-  char *a3 = mmap(2, 0);
+  char *a1 = mmap(0, PROT_NONE);
+  char *a2 = mmap(1, PROT_NONE);
+  char *a3 = mmap(2, PROT_NONE);
   if(a1 != MAP_FAILED)
     exit(1);
   if(a1 == a2 && a2 == a3)
@@ -2612,7 +2643,7 @@ void
 mapfail(char *s)
 {
   for(int fd = -2; fd < 10; fd++)
-    if(mmap(fd, 0) != MAP_FAILED)
+    if(mmap(fd, PROT_NONE) != MAP_FAILED)
       exit(1);
   exit(0);
 }
@@ -2621,7 +2652,7 @@ void
 mapsize0(char *s)
 {
   int fd = open("empty1.txt", O_CREATE | O_RDONLY);
-  char *file = mmap(fd, 0);
+  char *file = mmap(fd, PROT_NONE);
   if(file != MAP_FAILED)
     exit(1);
   exit(0);
@@ -2674,8 +2705,20 @@ unmapsize0twicefails(char *s)
 void
 unmap(char *s)
 {
-  int fd = createreadablefile();
-  char *file = mmap(fd, PTE_R);
+  int fd = readablefile();
+  char *file = mmap(fd, PROT_NONE);
+  if(file == MAP_FAILED)
+    exit(1);
+  if(munmap(file) != 0)
+    exit(1);
+  exit(0);
+}
+
+void
+readmap()
+{
+  int fd = readablefile();
+  char *file = mmap(fd, PROT_READ);
   if(file == MAP_FAILED)
     exit(1);
   if(file[0] != 'h' || file[1] != 'e' || file[2] != 'l' || file[3] != 'l' || file[4] != 'o')
@@ -2686,10 +2729,31 @@ unmap(char *s)
 }
 
 void
+writemap() // TODO: Improve this test. The second time we run it, it will fail, due the change in the file.
+{
+  char p[5];
+  int fd = readablewritablefile();
+  read(fd, p, 5);
+  if(p[0] != 'h')
+    exit(1);
+  char *file = mmap(fd, PROT_READ | PROT_WRITE);
+  if(file == MAP_FAILED)
+    exit(1);
+  file[0] = 'Q';
+  if(munmap(file) != 0)
+    exit(1);
+  fd = readablewritablefile();
+  read(fd, p, 5);
+  if(p[0] != 'Q')
+    exit(1);
+  exit(0);
+}
+
+void
 unmapinvalidaddr(char *s)
 {
   int invalid_fd = 10;
-  char* addr = mmap(invalid_fd, 0);
+  char* addr = mmap(invalid_fd, PROT_NONE);
   if(addr != MAP_FAILED)
     exit(1);
   if(munmap(addr) == 0)
@@ -2707,6 +2771,8 @@ struct test {
   {mapsize0, "mapsize0" },
   //{multiplemapsize0, "multiplemapsize0" },
   //{unmapsize0twicefails, "unmapsize0twicefails" },
+  {readmap, "readmap"},
+  {writemap, "writemap"},
   {unmap, "unmap"},
   {unmapinvalidaddr, "unmapinvalidaddr"},
   {copyin, "copyin"},
