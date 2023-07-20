@@ -69,8 +69,10 @@ usertrap(void)
 
     syscall();
   } else if((r_scause() == 13 || r_scause() == 15) && ((md = getmd(r_stval())) != -1)){
-    if(loadblock(p, md, r_stval()) != 0)
+    if(loadblock(p, md, r_stval(), r_scause()) != 0) {
+      printf("error while mapping\n"); // TODO: throw a better error information
       setkilled(p);
+    }
   } else if((which_dev = devintr()) != 0){
     // ok
   } else {
