@@ -2767,6 +2767,18 @@ unmaptwice()
 }
 
 void
+unmapnonbaseaddr()
+{
+  int fd = readablefile();
+  char *file = mmap(fd, PROT_NONE);
+  if(file == MAP_FAILED)
+    exit(1);
+  if(munmap(file + 2) == 0)
+    exit(1);
+  exit(0);
+}
+
+void
 unmapinvalidaddr(char *s)
 {
   int invalid_fd = 10;
@@ -2791,6 +2803,7 @@ struct test {
   {readmap, "readmap"},
   {writemap, "writemap"},
   {unmaptwice, "unmaptwice"},
+  {unmapnonbaseaddr, "unmapnonbaseaddr"},
   {unmap, "unmap"},
   {unmapinvalidaddr, "unmapinvalidaddr"},
   {copyin, "copyin"},
