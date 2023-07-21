@@ -2750,6 +2750,23 @@ writemap() // TODO: Improve this test. The second time we run it, it will fail, 
 }
 
 void
+unmaptwice()
+{
+  char p[5];
+  int fd = writablefile();
+  read(fd, p, 5);
+  char *file = mmap(fd, PROT_WRITE);
+  if(file == MAP_FAILED)
+    exit(1);
+  file[0] = 'v';
+  if(munmap(file) != 0)
+    exit(1);
+  if(munmap(file) == 0)
+    exit(1);
+  exit(0);
+}
+
+void
 unmapinvalidaddr(char *s)
 {
   int invalid_fd = 10;
@@ -2773,6 +2790,7 @@ struct test {
   //{unmapsize0twicefails, "unmapsize0twicefails" },
   {readmap, "readmap"},
   {writemap, "writemap"},
+  {unmaptwice, "unmaptwice"},
   {unmap, "unmap"},
   {unmapinvalidaddr, "unmapinvalidaddr"},
   {copyin, "copyin"},
