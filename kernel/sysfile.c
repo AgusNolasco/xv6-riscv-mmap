@@ -528,6 +528,7 @@ uint64
 sys_munmap(void)
 {
   struct proc *p = myproc();
+  struct file *f;
   uint64 va;
   argaddr(0, &va);
 
@@ -539,12 +540,11 @@ sys_munmap(void)
     return -1;
 
   int fd = p->mfile[md].fd;
-  if(p->ofile[fd] == 0)
+  if((f = p->ofile[fd]) == 0)
     return -1;
 
-  int fsize = p->ofile[fd]->ip->size;
-  checkmodif(p->ofile[fd]->ip, p->pagetable, va);
-  uvmunmap(p->pagetable, va, PGROUNDUP(fsize)/PGSIZE, 1);
+  checkmodif(f->ip, p->pagetable, va);
+  uvmunmap(p->pagetable, va, PGROUNDUP(f->ip->size)/PGSIZE, 1);
   p->mfile[md].va = 0;
   p->mfile[md].fd = 0;
   return 0;
