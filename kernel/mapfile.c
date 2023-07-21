@@ -97,14 +97,14 @@ savechanges(struct inode* ip, uint64 va, int offset, int n)
 }
 
 void
-checkmodif(int fsize, struct inode *ip, pagetable_t pagetable, uint64 va) {
-  for(int offset = 0; offset < fsize; offset += PGSIZE) {
+checkmodif(struct inode *ip, pagetable_t pagetable, uint64 va) {
+  for(int offset = 0; offset < ip->size; offset += PGSIZE) {
     pte_t *pte = walk(pagetable, va + offset, 0);
     if(!(PTE_D & (*pte)))  // Dirty bit is zero
       continue;
     int a = va + offset;
-    if(offset + PGSIZE > fsize) // Last page
-      savechanges(ip, a, offset, fsize - offset);
+    if(offset + PGSIZE > ip->size) // Last page
+      savechanges(ip, a, offset, ip->size - offset);
     else
       savechanges(ip, a, offset, PGSIZE);
   }

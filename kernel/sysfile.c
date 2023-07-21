@@ -543,7 +543,7 @@ sys_munmap(void)
     return -1;
 
   int fsize = p->ofile[fd]->ip->size;
-  checkmodif(fsize, p->ofile[fd]->ip, p->pagetable, va);
+  checkmodif(p->ofile[fd]->ip, p->pagetable, va);
   uvmunmap(p->pagetable, va, PGROUNDUP(fsize)/PGSIZE, 1);
   p->mfile[md].va = 0;
   p->mfile[md].fd = 0;
