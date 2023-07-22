@@ -2874,6 +2874,40 @@ struct test {
 // Section with tests that take a fair bit of time
 //
 
+int
+readablelargefile()
+{
+  const char *filename = "onlyreadablelargetestdata.txt";
+  int fd;
+  if((fd = open(filename, O_RDONLY)) != -1)
+    return fd;
+  fd = open(filename, O_CREATE | O_RDWR);
+  const char *str1 = "Hello world in page 1";
+  const char *str2 = "I'm in second page";
+  const char *str3 = "Third page";
+  const char *str4 = "A fourth one";
+  const char *str5 = "And finally a fifth page";
+  const unsigned char zero = 0;
+  int i;
+
+  write(fd, str1, strlen(str1));
+  for (i=strlen(str1); i<PGSIZE; i++)
+      write(fd, &zero, 1);
+  write(fd, str2, strlen(str2) + 1);
+  for (i+=strlen(str2) + 1; i<PGSIZE * 2; i++)
+      write(fd, &zero, 1);
+  write(fd, str3, strlen(str3) + 1);
+  for (i+=strlen(str3) + 1; i<PGSIZE * 3; i++)
+      write(fd, &zero, 1);
+  write(fd, str4, strlen(str4) + 1);
+  for (i+=strlen(str4) + 1; i<PGSIZE * 4; i++)
+      write(fd, &zero, 1);
+  write(fd, str5, strlen(str5)+1);
+      
+  close(fd);
+  return open(filename, O_RDONLY);
+}
+
 // directory that uses indirect blocks
 void
 bigdir(char *s)
@@ -3155,6 +3189,20 @@ outofinodes(char *s)
   }
 }
 
+void
+readlargemap()
+{
+  int fd = readablelargefile();
+  char *file = mmap(fd, PROT_READ);
+  if(file == MAP_FAILED)
+    exit(1);
+  if(file[0] != 'H' || file[4096] != 'I' || file[16384] != 'A')
+    exit(1);
+  if(munmap(file) != 0)
+    exit(1);
+  exit(0);
+}
+
 struct test slowtests[] = {
   {bigdir, "bigdir"},
   {manywrites, "manywrites"},
@@ -3162,6 +3210,7 @@ struct test slowtests[] = {
   {execout, "execout"},
   {diskfull, "diskfull"},
   {outofinodes, "outofinodes"},
+  {readlargemap, "readlargemap" },
     
   { 0, 0},
 };

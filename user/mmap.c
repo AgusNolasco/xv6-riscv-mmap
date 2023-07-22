@@ -9,7 +9,7 @@ int main()
   printf("fd = %d\n", fd);
 
   for(int i = -2; i < fd; i++)
-    printf("fd %d -> %p\n", i, mmap(i, 0));
+    printf("fd %d -> %p\n", i, mmap(i, PROT_NONE));
 
   char *addr, *addr2;
   printf("addr: %p\n", addr = mmap(fd, PROT_WRITE));
