@@ -2750,6 +2750,37 @@ writemap() // TODO: Improve this test. The second time we run it, it will fail, 
 }
 
 void
+mapseveralfiles()
+{
+  int fd1 = readablefile();
+  char *file1 = mmap(fd1, PROT_READ);
+  if(file1 == MAP_FAILED)
+    exit(1);
+  int fd2 = writablefile();
+  char *file2 = mmap(fd2, PROT_WRITE);
+  if(file2 == MAP_FAILED)
+    exit(1);
+  int fd3 = readablewritablefile();
+  char *file3 = mmap(fd3, PROT_READ | PROT_WRITE);
+  if(file3 == MAP_FAILED)
+    exit(1);
+  int fd4 = readablefile();
+  char *file4 = mmap(fd4, PROT_READ);
+  if(file4 == MAP_FAILED)
+    exit(1);
+  
+  if(munmap(file1) != 0)
+    exit(1);
+  if(munmap(file2) != 0)
+    exit(1);
+  if(munmap(file3) != 0)
+    exit(1);
+  if(munmap(file4) != 0)
+    exit(1);
+  exit(0);
+}
+
+void
 unmaptwice()
 {
   char p[5];
@@ -2802,6 +2833,7 @@ struct test {
   //{unmapsize0twicefails, "unmapsize0twicefails" },
   {readmap, "readmap"},
   {writemap, "writemap"},
+  {mapseveralfiles, "mapseveralfiles"},
   {unmaptwice, "unmaptwice"},
   {unmapnonbaseaddr, "unmapnonbaseaddr"},
   {unmap, "unmap"},
