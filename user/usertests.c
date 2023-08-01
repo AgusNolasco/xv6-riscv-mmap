@@ -2602,7 +2602,7 @@ writablefile()
 }
 
 int
-readablewritablefile()
+rdwrfile()
 {
   const char *filename = "readablewritabletestdata.txt";
   int fd;
@@ -2614,6 +2614,12 @@ readablewritablefile()
   write(fd, str, l);
   close(fd);
   return open(filename, O_RDWR);
+}
+
+void
+clearrdwrfile()
+{
+  unlink("readablewritabletestdata.txt");
 }
 
 void
@@ -2658,50 +2664,6 @@ mapsize0(char *s)
   exit(0);
 }
 
-/*
-void
-multiplemapsize0(char *s)
-{
-  int fd1 = open("empty1.txt", O_CREATE | O_RDONLY);
-  int fd2 = open("empty2.txt", O_CREATE | O_RDONLY);
-  int fd3 = open("empty3.txt", O_CREATE | O_RDONLY);
-  char *file1 = mmap(fd1, 0);
-  char *file2 = mmap(fd2, 0);
-  char *file3 = mmap(fd3, 0);
-  if(!file1)
-    exit(1);
-  if(!file2)
-    exit(1);
-  if(!file3)
-    exit(1);
-
-  if(munmap(file1))
-    exit(1);
-  if(munmap(file2))
-    exit(1);
-  if(munmap(file3))
-    exit(1);
-
-  exit(0);
-}
-
-void
-unmapsize0twicefails(char *s)
-{
-  int fd = open("empty.txt", O_CREATE | O_RDONLY);
-  char *file = mmap(fd, 0);
-  if(!file)
-    exit(1);
-  
-  if(munmap(file))
-    exit(1);
-  if(!munmap(file))
-    exit(1);
-
-  exit(0);
-}
-*/
-
 void
 unmap(char *s)
 {
@@ -2729,10 +2691,10 @@ readmap()
 }
 
 void
-writemap() // TODO: Improve this test. The second time we run it, it will fail, due the change in the file.
+writemap()
 {
   char p[5];
-  int fd = readablewritablefile();
+  int fd = rdwrfile();
   read(fd, p, 5);
   if(p[0] != 'h')
     exit(1);
@@ -2742,10 +2704,11 @@ writemap() // TODO: Improve this test. The second time we run it, it will fail, 
   file[0] = 'Q';
   if(munmap(file) != 0)
     exit(1);
-  fd = readablewritablefile();
+  fd = rdwrfile();
   read(fd, p, 5);
   if(p[0] != 'Q')
     exit(1);
+  clearrdwrfile();
   exit(0);
 }
 
@@ -2760,7 +2723,7 @@ mapseveralfiles()
   char *file2 = mmap(fd2, PROT_WRITE);
   if(file2 == MAP_FAILED)
     exit(1);
-  int fd3 = readablewritablefile();
+  int fd3 = rdwrfile();
   char *file3 = mmap(fd3, PROT_READ | PROT_WRITE);
   if(file3 == MAP_FAILED)
     exit(1);
@@ -2821,6 +2784,16 @@ unmapinvalidaddr(char *s)
   exit(0);
 }
 
+void
+mappingtowriteonareadonlyfile()
+{
+  int fd = readablefile();
+  char *file = mmap(fd, PROT_WRITE);
+  if(file == MAP_FAILED)
+    exit(0);
+  exit(1);
+}
+
 struct test {
   void (*f)(char *);
   char *s;
@@ -2829,8 +2802,6 @@ struct test {
   {mapfail, "mapfail" },
   {mapofdevices, "mapofdevices" },
   {mapsize0, "mapsize0" },
-  //{multiplemapsize0, "multiplemapsize0" },
-  //{unmapsize0twicefails, "unmapsize0twicefails" },
   {readmap, "readmap"},
   {writemap, "writemap"},
   {mapseveralfiles, "mapseveralfiles"},
@@ -2838,6 +2809,7 @@ struct test {
   {unmapnonbaseaddr, "unmapnonbaseaddr"},
   {unmap, "unmap"},
   {unmapinvalidaddr, "unmapinvalidaddr"},
+  {mappingtowriteonareadonlyfile, "mappingtowriteonareadonlyfile"},
   {copyin, "copyin"},
   {copyout, "copyout"},
   {copyinstr1, "copyinstr1"},

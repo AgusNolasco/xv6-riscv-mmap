@@ -43,6 +43,11 @@ mfilealloc(struct proc *p, int fd, int perm)
 
   if(md == NOMAPS)
     return -1;
+
+  if((perm & PROT_READ) && !p->ofile[fd]->readable)
+    return -1;
+  if((perm & PROT_WRITE) && !p->ofile[fd]->writable)
+    return -1;
   
   p->mfile[md].va = p->sz;
   p->mfile[md].perm = perm;
