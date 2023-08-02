@@ -2884,6 +2884,43 @@ maprdwronfork()
   }
 }
 
+void
+mapsamefiletwice()
+{
+  int fd = rdwrfile();
+  char *map1 = mmap(fd, PROT_READ | PROT_WRITE);
+  char *map2 = mmap(fd, PROT_READ | PROT_WRITE);
+  if(map1 == MAP_FAILED)
+    exit(1);
+  if(map2 == MAP_FAILED)
+    exit(1);
+  if(map1 == map2)
+    exit(1);
+  
+  if(map1[0] != map2[0])
+    exit(1);
+
+  map1[0] = 'P';
+  if(munmap(map1) != 0)
+    exit(1);
+  map2[0] = 'Q';
+  if(munmap(map2) != 0)
+    exit(1);
+
+  char *map3;
+  if((map3 = mmap(fd, PROT_READ)) == MAP_FAILED)
+    exit(1);
+
+  if(map3[0] != 'Q')
+    exit(1); 
+
+  if(munmap(map3) != 0) // TODO: add a test where we does not unmap and then we exit the program. It produces freewalk panic.
+    exit(1);
+  
+  clearrdwrfile();
+  exit(0);
+}
+
 struct test {
   void (*f)(char *);
   char *s;
@@ -2902,6 +2939,7 @@ struct test {
   {mappingtowriteonareadonlyfile, "mappingtowriteonareadonlyfile"},
   {mapfilesandfork, "mapfilesandfork"},
   {maprdwronfork, "maprdwronfork"},
+  {mapsamefiletwice, "mapsamefiletwice"},
   {copyin, "copyin"},
   {copyout, "copyout"},
   {copyinstr1, "copyinstr1"},
