@@ -308,6 +308,14 @@ fork(void)
       np->ofile[i] = filedup(p->ofile[i]);
   np->cwd = idup(p->cwd);
 
+  // copy maps.
+  for(i = 0; i < NOMAPS; i++)
+    if(p->mfile[i].va) {
+      np->mfile[i].va = p->mfile[i].va;
+      np->mfile[i].fd = p->mfile[i].fd;
+      np->mfile[i].perm = p->mfile[i].perm;
+    }
+
   safestrcpy(np->name, p->name, sizeof(p->name));
 
   pid = np->pid;
