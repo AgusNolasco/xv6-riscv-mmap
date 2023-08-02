@@ -2794,6 +2794,64 @@ mappingtowriteonareadonlyfile()
   exit(1);
 }
 
+void
+mapfilesandfork()
+{
+  int fd1 = readablefile();
+  char *file1 = mmap(fd1, PROT_READ);
+  if(file1 == MAP_FAILED)
+    exit(1);
+  int fd2 = writablefile();
+  char *file2 = mmap(fd2, PROT_WRITE);
+  if(file2 == MAP_FAILED)
+    exit(1);
+  int fd3 = rdwrfile();
+  char *file3 = mmap(fd3, PROT_READ | PROT_WRITE);
+  if(file3 == MAP_FAILED)
+    exit(1);
+
+  file3[0] = 'C';
+  if(fork() == 0) {
+    if(file1[0] != 'h')
+      exit(1);
+    if(munmap(file1) != 0)
+      exit(1);
+    
+    if(file3[0] != 'C')
+      exit(1);
+    file3[0] = 'B';
+    if(file3[0] != 'B')
+      exit(1);
+    if(munmap(file3) != 0)
+      exit(1);
+
+    file2[0] = 'b';
+    if(munmap(file2) != 0)
+      exit(1);
+
+  } else {
+    if(file1[0] != 'h')
+      exit(1);
+    if(munmap(file1) != 0)
+      exit(1);
+    
+    if(file3[0] != 'C')
+      exit(1);
+    file3[0] = 'A';
+    if(file3[0] != 'A')
+      exit(1);
+    if(munmap(file3) != 0)
+      exit(1);
+    
+    file2[0] = 'd';
+    if(munmap(file2) != 0)
+      exit(1);
+
+    wait(0);
+    clearrdwrfile();
+  }
+}
+
 struct test {
   void (*f)(char *);
   char *s;
@@ -2810,6 +2868,7 @@ struct test {
   {unmap, "unmap"},
   {unmapinvalidaddr, "unmapinvalidaddr"},
   {mappingtowriteonareadonlyfile, "mappingtowriteonareadonlyfile"},
+  {mapfilesandfork, "mapfilesandfork"},
   {copyin, "copyin"},
   {copyout, "copyout"},
   {copyinstr1, "copyinstr1"},
