@@ -2852,6 +2852,38 @@ mapfilesandfork()
   }
 }
 
+void
+maprdwronfork()
+{
+  int fd = rdwrfile();
+  char *file = mmap(fd, PROT_READ | PROT_WRITE);
+  if(file == MAP_FAILED)
+    exit(1);
+
+  if(fork() == 0) {
+    if(file[0] != 'h')
+      exit(1);
+    file[0] = 'B';
+    if(file[0] != 'B')
+      exit(1);
+    if(munmap(file) != 0)
+      exit(1);
+
+  } else {
+    if(munmap(file) != 0)
+      exit(1);
+    
+    wait(0);
+    char *file = mmap(fd, PROT_READ | PROT_WRITE);
+    if(file[0] != 'B')
+      exit(1);
+    if(munmap(file) != 0)
+      exit(1);
+    
+    clearrdwrfile();
+  }
+}
+
 struct test {
   void (*f)(char *);
   char *s;
@@ -2869,6 +2901,7 @@ struct test {
   {unmapinvalidaddr, "unmapinvalidaddr"},
   {mappingtowriteonareadonlyfile, "mappingtowriteonareadonlyfile"},
   {mapfilesandfork, "mapfilesandfork"},
+  {maprdwronfork, "maprdwronfork"},
   {copyin, "copyin"},
   {copyout, "copyout"},
   {copyinstr1, "copyinstr1"},
