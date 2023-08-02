@@ -368,12 +368,11 @@ exit(int status)
     }
   }
 
+  // Close all maps
   for(int md = 0; md < NOMAPS; md++) {
     struct mapfile *mpfile = &p->mfile[md];
     if(!mpfile->va)
       continue;
-    if(mpfile->va < p->sz)
-      p->sz = mpfile->va;
 
     mpfile->va = 0;
     mpfile->fd = 0;

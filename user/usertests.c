@@ -2914,9 +2914,23 @@ mapsamefiletwice()
   if(map3[0] != 'Q')
     exit(1); 
 
-  if(munmap(map3) != 0) // TODO: add a test where we does not unmap and then we exit the program. It produces freewalk panic.
+  if(munmap(map3) != 0)
     exit(1);
   
+  clearrdwrfile();
+  exit(0);
+}
+
+void
+exitwithoutunmap()
+{
+  int fd = rdwrfile();
+  char *map1 = mmap(fd, PROT_READ | PROT_WRITE);
+  if(map1 == MAP_FAILED)
+    exit(1);
+
+  map1[0] = 'P';
+
   clearrdwrfile();
   exit(0);
 }
@@ -2940,6 +2954,7 @@ struct test {
   {mapfilesandfork, "mapfilesandfork"},
   {maprdwronfork, "maprdwronfork"},
   {mapsamefiletwice, "mapsamefiletwice"},
+  {exitwithoutunmap, "exitwithoutunmap"},
   {copyin, "copyin"},
   {copyout, "copyout"},
   {copyinstr1, "copyinstr1"},
