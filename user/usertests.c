@@ -2935,6 +2935,17 @@ exitwithoutunmap()
   exit(0);
 }
 
+void
+closefilebeforeunmap()
+{
+  int fd = rdwrfile();
+  char *file = mmap(fd, PROT_READ);
+  close(fd);
+  if(munmap(file) == 0)
+    exit(1);
+  exit(0);
+}
+
 struct test {
   void (*f)(char *);
   char *s;
@@ -2955,12 +2966,13 @@ struct test {
   {maprdwronfork, "maprdwronfork"},
   {mapsamefiletwice, "mapsamefiletwice"},
   {exitwithoutunmap, "exitwithoutunmap"},
+  {closefilebeforeunmap, "closefilebeforeunmap"},
   {copyin, "copyin"},
   {copyout, "copyout"},
   {copyinstr1, "copyinstr1"},
   {copyinstr2, "copyinstr2"},
   {copyinstr3, "copyinstr3"},
-  {rwsbrk, "rwsbrk" },
+  {rwsbrk, "rwsbrk"},
   {truncate1, "truncate1"},
   {truncate2, "truncate2"},
   {truncate3, "truncate3"},
