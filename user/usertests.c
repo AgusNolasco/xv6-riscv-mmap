@@ -3352,6 +3352,18 @@ readlargemap()
   exit(0);
 }
 
+void
+readlargemapwithoutunmapping()
+{
+  int fd = readablelargefile();
+  char *file = mmap(fd, PROT_READ);
+  if(file == MAP_FAILED)
+    exit(1);
+  if(file[0] != 'H' || file[4096] != 'I' || file[16384] != 'A')
+    exit(1);
+  exit(0);
+}
+
 struct test slowtests[] = {
   {bigdir, "bigdir"},
   {manywrites, "manywrites"},
@@ -3360,6 +3372,7 @@ struct test slowtests[] = {
   {diskfull, "diskfull"},
   {outofinodes, "outofinodes"},
   {readlargemap, "readlargemap" },
+  {readlargemapwithoutunmapping, "readlargemapwithoutunmapping" },
     
   { 0, 0},
 };
