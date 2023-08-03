@@ -188,7 +188,7 @@ void            virtio_disk_intr(void);
 
 //mapfile.c
 int             getmd(uint64);
-void            checkmodif(struct mapfile *mf, pagetable_t, uint64);
+void            applymodif(struct mapfile *mf, pagetable_t, uint64);
 int             mfilealloc(struct proc *, int, int);
 int             loadblock(struct proc *, int, uint64, int);
 

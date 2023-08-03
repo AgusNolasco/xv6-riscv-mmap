@@ -538,7 +538,8 @@ sys_munmap(void)
   if(va != p->mfile[md].va) // The given address should be exactly the base address
     return -1;
 
-  checkmodif(&p->mfile[md], p->pagetable, va);
+  if(p->mfile[md].writable)
+    applymodif(&p->mfile[md], p->pagetable, va);
   uvmunmap(p->pagetable, va, PGROUNDUP(p->mfile[md].ip->size)/PGSIZE, 1);
   
   p->mfile[md].ip->ref--;

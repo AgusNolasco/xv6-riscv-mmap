@@ -85,7 +85,7 @@ savechanges(struct inode* ip, uint64 va, int offset, int n)
 }
 
 void
-checkmodif(struct mapfile *mf, pagetable_t pagetable, uint64 va) {
+applymodif(struct mapfile *mf, pagetable_t pagetable, uint64 va) {
   if(!mf->writable)
     return;
   
