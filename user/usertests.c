@@ -2626,7 +2626,7 @@ void
 map(char *s)
 {
   int fd = readablefile();
-  char *file = mmap(fd, PROT_NONE);
+  char *file = mmap(fd);
   if(file == MAP_FAILED)
     exit(1);
   exit(0);
@@ -2635,9 +2635,9 @@ map(char *s)
 void
 mapofdevices(char *s)
 {
-  char *a1 = mmap(0, PROT_NONE);
-  char *a2 = mmap(1, PROT_NONE);
-  char *a3 = mmap(2, PROT_NONE);
+  char *a1 = mmap(0);
+  char *a2 = mmap(1);
+  char *a3 = mmap(2);
   if(a1 != MAP_FAILED)
     exit(1);
   if(a1 == a2 && a2 == a3)
@@ -2649,7 +2649,7 @@ void
 mapfail(char *s)
 {
   for(int fd = -2; fd < 10; fd++)
-    if(mmap(fd, PROT_NONE) != MAP_FAILED)
+    if(mmap(fd) != MAP_FAILED)
       exit(1);
   exit(0);
 }
@@ -2658,7 +2658,7 @@ void
 mapsize0(char *s)
 {
   int fd = open("empty1.txt", O_CREATE | O_RDONLY);
-  char *file = mmap(fd, PROT_NONE);
+  char *file = mmap(fd);
   if(file != MAP_FAILED)
     exit(1);
   exit(0);
@@ -2668,7 +2668,7 @@ void
 unmap(char *s)
 {
   int fd = readablefile();
-  char *file = mmap(fd, PROT_NONE);
+  char *file = mmap(fd);
   if(file == MAP_FAILED)
     exit(1);
   if(munmap(file) != 0)
@@ -2680,7 +2680,7 @@ void
 readmap()
 {
   int fd = readablefile();
-  char *file = mmap(fd, PROT_READ);
+  char *file = mmap(fd);
   if(file == MAP_FAILED)
     exit(1);
   if(file[0] != 'h' || file[1] != 'e' || file[2] != 'l' || file[3] != 'l' || file[4] != 'o')
@@ -2698,7 +2698,7 @@ writemap()
   read(fd, p, 5);
   if(p[0] != 'h')
     exit(1);
-  char *file = mmap(fd, PROT_READ | PROT_WRITE);
+  char *file = mmap(fd);
   if(file == MAP_FAILED)
     exit(1);
   file[0] = 'Q';
@@ -2716,19 +2716,19 @@ void
 mapseveralfiles()
 {
   int fd1 = readablefile();
-  char *file1 = mmap(fd1, PROT_READ);
+  char *file1 = mmap(fd1);
   if(file1 == MAP_FAILED)
     exit(1);
   int fd2 = writablefile();
-  char *file2 = mmap(fd2, PROT_WRITE);
+  char *file2 = mmap(fd2);
   if(file2 == MAP_FAILED)
     exit(1);
   int fd3 = rdwrfile();
-  char *file3 = mmap(fd3, PROT_READ | PROT_WRITE);
+  char *file3 = mmap(fd3);
   if(file3 == MAP_FAILED)
     exit(1);
   int fd4 = readablefile();
-  char *file4 = mmap(fd4, PROT_READ);
+  char *file4 = mmap(fd4);
   if(file4 == MAP_FAILED)
     exit(1);
 
@@ -2749,7 +2749,7 @@ unmaptwice()
   char p[5];
   int fd = writablefile();
   read(fd, p, 5);
-  char *file = mmap(fd, PROT_WRITE);
+  char *file = mmap(fd);
   if(file == MAP_FAILED)
     exit(1);
   file[0] = 'v';
@@ -2764,7 +2764,7 @@ void
 unmapnonbaseaddr()
 {
   int fd = readablefile();
-  char *file = mmap(fd, PROT_NONE);
+  char *file = mmap(fd);
   if(file == MAP_FAILED)
     exit(1);
   if(munmap(file + 2) == 0)
@@ -2776,7 +2776,7 @@ void
 unmapinvalidaddr(char *s)
 {
   int invalid_fd = 10;
-  char* addr = mmap(invalid_fd, PROT_NONE);
+  char* addr = mmap(invalid_fd);
   if(addr != MAP_FAILED)
     exit(1);
   if(munmap(addr) == 0)
@@ -2788,7 +2788,7 @@ void
 mappingtowriteonareadonlyfile()
 {
   int fd = readablefile();
-  char *file = mmap(fd, PROT_WRITE);
+  char *file = mmap(fd);
   if(file == MAP_FAILED)
     exit(0);
   exit(1);
@@ -2798,15 +2798,15 @@ void
 mapfilesandfork()
 {
   int fd1 = readablefile();
-  char *file1 = mmap(fd1, PROT_READ);
+  char *file1 = mmap(fd1);
   if(file1 == MAP_FAILED)
     exit(1);
   int fd2 = writablefile();
-  char *file2 = mmap(fd2, PROT_WRITE);
+  char *file2 = mmap(fd2);
   if(file2 == MAP_FAILED)
     exit(1);
   int fd3 = rdwrfile();
-  char *file3 = mmap(fd3, PROT_READ | PROT_WRITE);
+  char *file3 = mmap(fd3);
   if(file3 == MAP_FAILED)
     exit(1);
 
@@ -2856,7 +2856,7 @@ void
 maprdwronfork()
 {
   int fd = rdwrfile();
-  char *file = mmap(fd, PROT_READ | PROT_WRITE);
+  char *file = mmap(fd);
   if(file == MAP_FAILED)
     exit(1);
 
@@ -2874,7 +2874,7 @@ maprdwronfork()
       exit(1);
 
     wait(0);
-    char *file = mmap(fd, PROT_READ | PROT_WRITE);
+    char *file = mmap(fd);
     if(file[0] != 'B')
       exit(1);
     if(munmap(file) != 0)
@@ -2888,8 +2888,8 @@ void
 mapsamefiletwice()
 {
   int fd = rdwrfile();
-  char *map1 = mmap(fd, PROT_READ | PROT_WRITE);
-  char *map2 = mmap(fd, PROT_READ | PROT_WRITE);
+  char *map1 = mmap(fd);
+  char *map2 = mmap(fd);
   if(map1 == MAP_FAILED)
     exit(1);
   if(map2 == MAP_FAILED)
@@ -2908,7 +2908,7 @@ mapsamefiletwice()
     exit(1);
 
   char *map3;
-  if((map3 = mmap(fd, PROT_READ)) == MAP_FAILED)
+  if((map3 = mmap(fd)) == MAP_FAILED)
     exit(1);
 
   if(map3[0] != 'Q')
@@ -2925,7 +2925,7 @@ void
 exitwithoutunmap()
 {
   int fd = rdwrfile();
-  char *map1 = mmap(fd, PROT_READ | PROT_WRITE);
+  char *map1 = mmap(fd);
   if(map1 == MAP_FAILED)
     exit(1);
 
@@ -2939,7 +2939,7 @@ void
 closefilebeforeunmap()
 {
   int fd = rdwrfile();
-  char *file = mmap(fd, PROT_READ);
+  char *file = mmap(fd);
   close(fd);
   if(munmap(file) == 0)
     exit(1);
@@ -3354,7 +3354,7 @@ void
 readlargemap()
 {
   int fd = readablelargefile();
-  char *file = mmap(fd, PROT_READ);
+  char *file = mmap(fd);
   if(file == MAP_FAILED)
     exit(1);
   if(file[0] != 'H' || file[4096] != 'I' || file[16384] != 'A')
@@ -3368,7 +3368,7 @@ void
 readlargemapwithoutunmapping()
 {
   int fd = readablelargefile();
-  char *file = mmap(fd, PROT_READ);
+  char *file = mmap(fd);
   if(file == MAP_FAILED)
     exit(1);
   if(file[0] != 'H' || file[4096] != 'I' || file[16384] != 'A')
