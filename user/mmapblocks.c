@@ -8,7 +8,7 @@
 
 int main()
 {
-  const char *filename = "testdata.txt"; 
+  const char *filename = "testdata.txt";
   int f = open(filename, O_RDWR);
 
   if (f < 0) {

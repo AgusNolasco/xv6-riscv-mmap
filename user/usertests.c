@@ -2731,7 +2731,7 @@ mapseveralfiles()
   char *file4 = mmap(fd4, PROT_READ);
   if(file4 == MAP_FAILED)
     exit(1);
-  
+
   if(munmap(file1) != 0)
     exit(1);
   if(munmap(file2) != 0)
@@ -2816,7 +2816,7 @@ mapfilesandfork()
       exit(1);
     if(munmap(file1) != 0)
       exit(1);
-    
+
     if(file3[0] != 'C')
       exit(1);
     file3[0] = 'B';
@@ -2834,7 +2834,7 @@ mapfilesandfork()
       exit(1);
     if(munmap(file1) != 0)
       exit(1);
-    
+
     if(file3[0] != 'C')
       exit(1);
     file3[0] = 'A';
@@ -2842,7 +2842,7 @@ mapfilesandfork()
       exit(1);
     if(munmap(file3) != 0)
       exit(1);
-    
+
     file2[0] = 'd';
     if(munmap(file2) != 0)
       exit(1);
@@ -2872,14 +2872,14 @@ maprdwronfork()
   } else {
     if(munmap(file) != 0)
       exit(1);
-    
+
     wait(0);
     char *file = mmap(fd, PROT_READ | PROT_WRITE);
     if(file[0] != 'B')
       exit(1);
     if(munmap(file) != 0)
       exit(1);
-    
+
     clearrdwrfile();
   }
 }
@@ -2896,7 +2896,7 @@ mapsamefiletwice()
     exit(1);
   if(map1 == map2)
     exit(1);
-  
+
   if(map1[0] != map2[0])
     exit(1);
 
@@ -2912,11 +2912,11 @@ mapsamefiletwice()
     exit(1);
 
   if(map3[0] != 'Q')
-    exit(1); 
+    exit(1);
 
   if(munmap(map3) != 0)
     exit(1);
-  
+
   clearrdwrfile();
   exit(0);
 }
@@ -3052,7 +3052,7 @@ readablelargefile()
   for (i+=strlen(str4) + 1; i<PGSIZE * 4; i++)
       write(fd, &zero, 1);
   write(fd, str5, strlen(str5)+1);
-      
+
   close(fd);
   return open(filename, O_RDONLY);
 }

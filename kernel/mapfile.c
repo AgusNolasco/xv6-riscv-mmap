@@ -34,7 +34,7 @@ getmd(uint64 addr)
 }
 
 int
-mfilealloc(struct proc *p, int fd, int perm) 
+mfilealloc(struct proc *p, int fd, int perm)
 {
   int md;
   for(md = 0; md < NOMAPS; md++)
@@ -48,7 +48,7 @@ mfilealloc(struct proc *p, int fd, int perm)
     return -1;
   if((perm & PROT_WRITE) && !p->ofile[fd]->writable)
     return -1;
-  
+
   p->mfile[md].va = p->sz;
   p->mfile[md].perm = perm;
   p->mfile[md].fd = fd;
@@ -59,7 +59,7 @@ mfilealloc(struct proc *p, int fd, int perm)
 }
 
 static int
-isvalidperm(int perm, int cause) 
+isvalidperm(int perm, int cause)
 {
   if(cause == WRITE && (perm & PROT_WRITE))
     return 1;
@@ -72,9 +72,9 @@ int
 loadblock(struct proc *p, int md, uint64 va, int cause)
 {
   char *pa;
-  int perm = p->mfile[md].perm | PTE_R | PTE_U; 
-  // TODO: Ask why we need to set read perm, if we don't set it, a panic: remap will occur. 
-  // In riscv priv docs, the scause 15 is an store or AMO. What AMO means? 
+  int perm = p->mfile[md].perm | PTE_R | PTE_U;
+  // TODO: Ask why we need to set read perm, if we don't set it, a panic: remap will occur.
+  // In riscv priv docs, the scause 15 is an store or AMO. What AMO means?
   // Seeing uvmalloc implementation, it always turns on the read bit.
   if(!isvalidperm(perm, cause))
     return -1;
