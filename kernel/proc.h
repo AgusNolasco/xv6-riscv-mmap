@@ -84,8 +84,9 @@ enum procstate { UNUSED, USED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 // Mapped files
 struct mapfile {
   uint64 va;          // Base virtual address
-  int fd;             // Process corresponding file descriptor
-  int perm;           // Permission flags
+  struct inode *ip;   // Mapping corresponding inode
+  int size;           // Mapping size
+  int writable;
 };
 
 // Per-process state

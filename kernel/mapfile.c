@@ -16,18 +16,13 @@ int
 getmd(uint64 addr)
 {
   struct proc *p = myproc();
-  struct file *f;
-  uint64 va, fsize;
+  uint64 va;
 
   for (int md = 0; md < NOMAPS; md++) {
     va = p->mfile[md].va;
     if(!va)
       continue;
-    f = p->ofile[p->mfile[md].fd];
-    if(!f)
-      continue;
-    fsize = f->ip->size;
-    if(va <= addr && addr < va + PGROUNDUP(fsize))
+    if(va <= addr && addr < va + PGROUNDUP(p->mfile[md].size))
       return md;
   }
   return -1;
@@ -50,44 +45,32 @@ mfilealloc(struct proc *p, int fd, int perm)
     return -1;
 
   p->mfile[md].va = p->sz;
-  p->mfile[md].perm = perm;
-  p->mfile[md].fd = fd;
-  int fsize = p->ofile[fd]->ip->size;
-  p->sz += PGROUNDUP(fsize);
+  p->mfile[md].writable = p->ofile[fd]->writable;
+  p->mfile[md].ip = p->ofile[fd]->ip;
+  p->mfile[md].size = p->mfile[md].ip->size;
+  
+  p->mfile[md].ip->ref++;
+  p->sz += PGROUNDUP(p->mfile[md].size);
 
   return p->mfile[md].va;
-}
-
-static int
-isvalidperm(int perm, int cause)
-{
-  if(cause == WRITE && (perm & PROT_WRITE))
-    return 1;
-  if(cause == READ && (perm & PROT_READ))
-    return 1;
-  return 0;
 }
 
 int
 loadblock(struct proc *p, int md, uint64 va, int cause)
 {
   char *pa;
-  int perm = p->mfile[md].perm | PTE_R | PTE_U;
   // TODO: Ask why we need to set read perm, if we don't set it, a panic: remap will occur.
   // In riscv priv docs, the scause 15 is an store or AMO. What AMO means?
   // Seeing uvmalloc implementation, it always turns on the read bit.
-  if(!isvalidperm(perm, cause))
-    return -1;
   if((pa = kalloc()) == 0)
     return -1;
   uint64 a = PGROUNDDOWN(va);
-  if(mappages(p->pagetable, a, PGSIZE, (uint64)pa, perm) == -1)
+  if(mappages(p->pagetable, a, PGSIZE, (uint64)pa, PTE_R | PTE_W | PTE_U) == -1)
     return -1;
-  int fd = p->mfile[md].fd;
   int offset = a - p->mfile[md].va;
-  ilock(p->ofile[fd]->ip);
-  readi(p->ofile[fd]->ip, 1, a, offset, PGSIZE);
-  iunlock(p->ofile[fd]->ip);
+  ilock(p->mfile[md].ip);
+  readi(p->mfile[md].ip, 1, a, offset, PGSIZE);
+  iunlock(p->mfile[md].ip);
   return 0;
 }
 
@@ -102,15 +85,18 @@ savechanges(struct inode* ip, uint64 va, int offset, int n)
 }
 
 void
-checkmodif(struct inode *ip, pagetable_t pagetable, uint64 va) {
-  for(int offset = 0; offset < ip->size; offset += PGSIZE) {
+checkmodif(struct mapfile *mf, pagetable_t pagetable, uint64 va) {
+  if(!mf->writable)
+    return;
+  
+  for(int offset = 0; offset < mf->size; offset += PGSIZE) {
     pte_t *pte = walk(pagetable, va + offset, 0);
     if(!(PTE_D & (*pte)))  // Dirty bit is zero
       continue;
     int a = va + offset;
-    if(offset + PGSIZE > ip->size) // Last page
-      savechanges(ip, a, offset, ip->size - offset);
+    if(offset + PGSIZE > mf->size) // Last page
+      savechanges(mf->ip, a, offset, mf->size - offset);
     else
-      savechanges(ip, a, offset, PGSIZE);
+      savechanges(mf->ip, a, offset, PGSIZE);
   }
 }

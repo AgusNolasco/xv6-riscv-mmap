@@ -528,7 +528,6 @@ uint64
 sys_munmap(void)
 {
   struct proc *p = myproc();
-  struct file *f;
   uint64 va;
   argaddr(0, &va);
 
@@ -539,13 +538,14 @@ sys_munmap(void)
   if(va != p->mfile[md].va) // The given address should be exactly the base address
     return -1;
 
-  int fd = p->mfile[md].fd;
-  if((f = p->ofile[fd]) == 0)
-    return -1;
-
-  checkmodif(f->ip, p->pagetable, va);
-  uvmunmap(p->pagetable, va, PGROUNDUP(f->ip->size)/PGSIZE, 1);
+  checkmodif(&p->mfile[md], p->pagetable, va);
+  uvmunmap(p->pagetable, va, PGROUNDUP(p->mfile[md].ip->size)/PGSIZE, 1);
+  
+  p->mfile[md].ip->ref--;
   p->mfile[md].va = 0;
-  p->mfile[md].fd = 0;
+  p->mfile[md].ip = 0;
+  p->mfile[md].size = 0;
+  p->mfile[md].writable = 0;
+
   return 0;
 }

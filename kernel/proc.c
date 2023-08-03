@@ -3,7 +3,10 @@
 #include "memlayout.h"
 #include "riscv.h"
 #include "spinlock.h"
+#include "sleeplock.h"
+#include "fs.h"
 #include "proc.h"
+#include "file.h"
 #include "defs.h"
 
 struct cpu cpus[NCPU];
@@ -312,8 +315,10 @@ fork(void)
   for(i = 0; i < NOMAPS; i++)
     if(p->mfile[i].va) {
       np->mfile[i].va = p->mfile[i].va;
-      np->mfile[i].fd = p->mfile[i].fd;
-      np->mfile[i].perm = p->mfile[i].perm;
+      np->mfile[i].ip = p->mfile[i].ip;
+      np->mfile[i].size = p->mfile[i].size;
+      np->mfile[i].writable = p->mfile[i].writable;
+      np->mfile[i].ip->ref++;
     }
 
   safestrcpy(np->name, p->name, sizeof(p->name));
@@ -375,8 +380,10 @@ exit(int status)
       continue;
 
     mpfile->va = 0;
-    mpfile->fd = 0;
-    mpfile->perm = 0;
+    mpfile->ip->ref--;
+    mpfile->ip = 0;
+    mpfile->size = 0;
+    mpfile->writable = 0;
   }
 
   begin_op();
