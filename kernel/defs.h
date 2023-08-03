@@ -189,8 +189,8 @@ void            virtio_disk_intr(void);
 //mapfile.c
 int             getmd(uint64);
 void            applymodif(struct mapfile *mf, pagetable_t, uint64);
-int             mfilealloc(struct proc *, int, int);
-int             loadblock(struct proc *, int, uint64, int);
+int             mfilealloc(struct proc *, int);
+int             loadblock(struct proc *, int, uint64);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))

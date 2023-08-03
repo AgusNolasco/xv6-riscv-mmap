@@ -29,7 +29,7 @@ getmd(uint64 addr)
 }
 
 int
-mfilealloc(struct proc *p, int fd, int perm)
+mfilealloc(struct proc *p, int fd)
 {
   int md;
   for(md = 0; md < NOMAPS; md++)
@@ -37,11 +37,6 @@ mfilealloc(struct proc *p, int fd, int perm)
       break;
 
   if(md == NOMAPS)
-    return -1;
-
-  if((perm & PROT_READ) && !p->ofile[fd]->readable)
-    return -1;
-  if((perm & PROT_WRITE) && !p->ofile[fd]->writable)
     return -1;
 
   p->mfile[md].va = p->sz;
@@ -56,7 +51,7 @@ mfilealloc(struct proc *p, int fd, int perm)
 }
 
 int
-loadblock(struct proc *p, int md, uint64 va, int cause)
+loadblock(struct proc *p, int md, uint64 va)
 {
   char *pa;
   // TODO: Ask why we need to set read perm, if we don't set it, a panic: remap will occur.
@@ -86,9 +81,6 @@ savechanges(struct inode* ip, uint64 va, int offset, int n)
 
 void
 applymodif(struct mapfile *mf, pagetable_t pagetable, uint64 va) {
-  if(!mf->writable)
-    return;
-  
   for(int offset = 0; offset < mf->size; offset += PGSIZE) {
     pte_t *pte = walk(pagetable, va + offset, 0);
     if(!(PTE_D & (*pte)))  // Dirty bit is zero

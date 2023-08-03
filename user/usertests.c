@@ -2790,8 +2790,15 @@ mappingtowriteonareadonlyfile()
   int fd = readablefile();
   char *file = mmap(fd);
   if(file == MAP_FAILED)
-    exit(0);
-  exit(1);
+    exit(1);
+  file[0] = 'A';
+  if(munmap(file) != 0)
+    exit(1);
+
+  file = mmap(fd);
+  if(file[0] != 'h')
+    exit(1);
+  exit(0);
 }
 
 void
@@ -2936,12 +2943,47 @@ exitwithoutunmap()
 }
 
 void
-closefilebeforeunmap()
+unmapafterclose()
 {
   int fd = rdwrfile();
   char *file = mmap(fd);
   close(fd);
-  if(munmap(file) == 0)
+  file[0] = 'c';
+  file[1] = 'h';
+  file[2] = 'a';
+  file[3] = 'u';
+  if(munmap(file) != 0)
+    exit(1);
+  
+  fd = rdwrfile();
+  file = mmap(fd);
+  if(file[0] != 'c' || file[1] != 'h' || file[2] != 'a' || file[3] != 'u')
+    exit(1);
+  
+  clearrdwrfile();
+  exit(0);
+}
+
+void
+addressingafterunmap()
+{
+  if (fork() == 0) {
+    int fd = readablefile();
+    char *file = mmap(fd);
+    file[0] = 'c';
+    file[1] = 'h';
+    file[2] = 'a';
+    file[3] = 'u';
+    if(munmap(file) != 0)
+      exit(1);
+    
+    file[0] = 'p';
+    printf("could write in an unmapped direction\n");
+    exit(1);
+  }
+  int xstatus;
+  wait(&xstatus);
+  if(xstatus == 0)
     exit(1);
   exit(0);
 }
@@ -2966,7 +3008,8 @@ struct test {
   {maprdwronfork, "maprdwronfork"},
   {mapsamefiletwice, "mapsamefiletwice"},
   {exitwithoutunmap, "exitwithoutunmap"},
-  {closefilebeforeunmap, "closefilebeforeunmap"},
+  {unmapafterclose, "unmapafterclose"},
+  {addressingafterunmap, "addressingafterunmap"},
   {copyin, "copyin"},
   {copyout, "copyout"},
   {copyinstr1, "copyinstr1"},
@@ -3376,15 +3419,30 @@ readlargemapwithoutunmapping()
   exit(0);
 }
 
+void
+readlargemapafterclose()
+{
+  int fd = readablelargefile();
+  char *file = mmap(fd);
+  if(file == MAP_FAILED)
+    exit(1);
+  close(fd);
+
+  if(file[0] != 'H' || file[4096] != 'I' || file[16384] != 'A')
+    exit(1);
+  exit(0);
+}
+
 struct test slowtests[] = {
+  {readlargemap, "readlargemap" },
+  {readlargemapwithoutunmapping, "readlargemapwithoutunmapping" },
+  {readlargemapafterclose, "readlargemapafterclose" },
   {bigdir, "bigdir"},
   {manywrites, "manywrites"},
   {badwrite, "badwrite" },
   {execout, "execout"},
   {diskfull, "diskfull"},
   {outofinodes, "outofinodes"},
-  {readlargemap, "readlargemap" },
-  {readlargemapwithoutunmapping, "readlargemapwithoutunmapping" },
     
   { 0, 0},
 };
