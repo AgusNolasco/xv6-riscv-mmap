@@ -25,7 +25,7 @@ int main()
     write(f, str2, strlen(str2)+1);
   }
 
-  char* addr = mmap(f, PTE_R | PTE_W);
+  char* addr = mmap(f);
   printf("mmap: %d\n", addr);
   printf("str[0]: %s\n", addr);
   printf("str[1]: %s\n", &addr[PGSIZE]);
