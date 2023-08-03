@@ -2954,12 +2954,12 @@ unmapafterclose()
   file[3] = 'u';
   if(munmap(file) != 0)
     exit(1);
-  
+
   fd = rdwrfile();
   file = mmap(fd);
   if(file[0] != 'c' || file[1] != 'h' || file[2] != 'a' || file[3] != 'u')
     exit(1);
-  
+
   clearrdwrfile();
   exit(0);
 }
@@ -2976,7 +2976,7 @@ addressingafterunmap()
     file[3] = 'u';
     if(munmap(file) != 0)
       exit(1);
-    
+
     file[0] = 'p';
     printf("could write in an unmapped direction\n");
     exit(1);

@@ -540,7 +540,7 @@ sys_munmap(void)
   if(p->mfile[md].writable)
     applymodif(&p->mfile[md], p->pagetable, va);
   uvmunmap(p->pagetable, va, PGROUNDUP(p->mfile[md].ip->size)/PGSIZE, 1);
-  
+
   p->mfile[md].ip->ref--;
   p->mfile[md].va = 0;
   p->mfile[md].ip = 0;

@@ -43,7 +43,7 @@ mfilealloc(struct proc *p, int fd)
   p->mfile[md].writable = p->ofile[fd]->writable;
   p->mfile[md].ip = p->ofile[fd]->ip;
   p->mfile[md].size = p->mfile[md].ip->size;
-  
+
   p->mfile[md].ip->ref++;
   p->sz += PGROUNDUP(p->mfile[md].size);
 
@@ -54,15 +54,12 @@ int
 loadblock(struct proc *p, int md, uint64 va)
 {
   char *pa;
-  // TODO: Ask why we need to set read perm, if we don't set it, a panic: remap will occur.
-  // In riscv priv docs, the scause 15 is an store or AMO. What AMO means?
-  // Seeing uvmalloc implementation, it always turns on the read bit.
   if((pa = kalloc()) == 0)
     return -1;
   uint64 a = PGROUNDDOWN(va);
   if(mappages(p->pagetable, a, PGSIZE, (uint64)pa, PTE_R | PTE_W | PTE_U) == -1)
     return -1;
-  int offset = a - p->mfile[md].va;
+  int offset = a - p->mfile[md].va; // offset is base addr of the page to be loaded
   ilock(p->mfile[md].ip);
   readi(p->mfile[md].ip, 1, a, offset, PGSIZE);
   iunlock(p->mfile[md].ip);
