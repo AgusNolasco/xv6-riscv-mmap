@@ -513,11 +513,11 @@ sys_mmap(void)
 
   if(argfd(0, &fd, &f) < 0)
     return -1;
-
   if(p->ofile[fd] == 0)
     return -1;
-
   if(p->ofile[fd]->ip->size == 0)
+    return -1;
+  if(p->ofile[fd]->ip->type == T_DIR)
     return -1;
 
   return mfilealloc(p, fd);

@@ -2988,6 +2988,24 @@ addressingafterunmap()
   exit(0);
 }
 
+void
+mapadir()
+{
+  if(mkdir("dir-example") != 0){
+    printf("mkdir");
+    exit(1);
+  }
+  int fd = open("dir-example", O_RDONLY);
+  if(fd < 0){
+    printf("open");
+    exit(1);
+  }
+  if(mmap(fd) != MAP_FAILED)
+    exit(1);
+  unlink("dir-example");
+  exit(0);
+}
+
 struct test {
   void (*f)(char *);
   char *s;
@@ -3010,6 +3028,7 @@ struct test {
   {exitwithoutunmap, "exitwithoutunmap"},
   {unmapafterclose, "unmapafterclose"},
   {addressingafterunmap, "addressingafterunmap"},
+  {mapadir, "mapadir"},
   {copyin, "copyin"},
   {copyout, "copyout"},
   {copyinstr1, "copyinstr1"},
