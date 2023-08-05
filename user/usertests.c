@@ -3006,6 +3006,39 @@ mapadir()
   exit(0);
 }
 
+void
+addressingoutsidefilesize()
+{
+  int fd = readablefile();
+  char *file = mmap(fd);
+  if(file == MAP_FAILED)
+    exit(1);
+  
+  if(file[1000] != 5)
+    exit(1);
+  if(file[4095] != 5)
+    exit(1);
+  exit(0);
+}
+
+void
+addressingoutsidemap()
+{
+  if (fork() == 0) {
+    int fd = readablefile();
+    char *file = mmap(fd);
+  
+    char c = file[4096];
+    printf("could read outside map, readed: %c\n", c);
+    exit(1);
+  }
+  int xstatus;
+  wait(&xstatus);
+  if(xstatus == 0)
+    exit(1);
+  exit(0);
+}
+
 struct test {
   void (*f)(char *);
   char *s;
@@ -3029,6 +3062,8 @@ struct test {
   {unmapafterclose, "unmapafterclose"},
   {addressingafterunmap, "addressingafterunmap"},
   {mapadir, "mapadir"},
+  {addressingoutsidefilesize, "addressingoutsidefilesize"},
+  {addressingoutsidemap, "addressingoutsidemap"},
   {copyin, "copyin"},
   {copyout, "copyout"},
   {copyinstr1, "copyinstr1"},
