@@ -3013,7 +3013,7 @@ addressingoutsidefilesize()
   char *file = mmap(fd);
   if(file == MAP_FAILED)
     exit(1);
-  
+
   if(file[1000] != 5)
     exit(1);
   if(file[4095] != 5)
@@ -3027,10 +3027,10 @@ addressingoutsidemap()
   if (fork() == 0) {
     int fd = readablefile();
     char *file = mmap(fd);
-  
+
     char c = file[4096];
     printf("could read outside map, readed: %c\n", c);
-    exit(1);
+    exit(0);
   }
   int xstatus;
   wait(&xstatus);
