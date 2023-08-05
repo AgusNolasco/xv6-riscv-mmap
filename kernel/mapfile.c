@@ -18,7 +18,7 @@ getmd(uint64 addr)
   struct proc *p = myproc();
   uint64 va;
 
-  for (int md = 0; md < NOMAPS; md++) {
+  for (int md = 0; md < NOMAP; md++) {
     va = p->mfile[md].va;
     if(!va)
       continue;
@@ -32,11 +32,11 @@ int
 mfilealloc(struct proc *p, int fd)
 {
   int md;
-  for(md = 0; md < NOMAPS; md++)
+  for(md = 0; md < NOMAP; md++)
     if(!p->mfile[md].va)
       break;
 
-  if(md == NOMAPS)
+  if(md == NOMAP)
     return -1;
 
   p->mfile[md].va = p->sz;

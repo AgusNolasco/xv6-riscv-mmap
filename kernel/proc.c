@@ -312,7 +312,7 @@ fork(void)
   np->cwd = idup(p->cwd);
 
   // copy maps.
-  for(i = 0; i < NOMAPS; i++)
+  for(i = 0; i < NOMAP; i++)
     if(p->mfile[i].va) {
       np->mfile[i].va = p->mfile[i].va;
       np->mfile[i].ip = p->mfile[i].ip;
@@ -374,7 +374,7 @@ exit(int status)
   }
 
   // Close all maps
-  for(int md = 0; md < NOMAPS; md++) {
+  for(int md = 0; md < NOMAP; md++) {
     struct mapfile *mpfile = &p->mfile[md];
     if(!mpfile->va)
       continue;

@@ -2572,7 +2572,7 @@ badarg(char *s)
 }
 
 int
-readablefile()
+onlyrdfile()
 {
   const char *filename = "onlyreadabletestdata.txt";
   int fd;
@@ -2587,9 +2587,9 @@ readablefile()
 }
 
 int
-writablefile()
+file()
 {
-  const char *filename = "onlywritabletestdata.txt";
+  const char *filename = "onlytestdata.txt";
   int fd;
   if((fd = open(filename, O_WRONLY)) != -1)
     return fd;
@@ -2604,7 +2604,7 @@ writablefile()
 int
 rdwrfile()
 {
-  const char *filename = "readablewritabletestdata.txt";
+  const char *filename = "readabletestdata.txt";
   int fd;
   if((fd = open(filename, O_RDWR)) != -1)
     return fd;
@@ -2619,13 +2619,13 @@ rdwrfile()
 void
 clearrdwrfile()
 {
-  unlink("readablewritabletestdata.txt");
+  unlink("readabletestdata.txt");
 }
 
 void
 map(char *s)
 {
-  int fd = readablefile();
+  int fd = onlyrdfile();
   char *file = mmap(fd);
   if(file == MAP_FAILED)
     exit(1);
@@ -2667,7 +2667,7 @@ mapsize0(char *s)
 void
 unmap(char *s)
 {
-  int fd = readablefile();
+  int fd = onlyrdfile();
   char *file = mmap(fd);
   if(file == MAP_FAILED)
     exit(1);
@@ -2679,7 +2679,7 @@ unmap(char *s)
 void
 readmap()
 {
-  int fd = readablefile();
+  int fd = onlyrdfile();
   char *file = mmap(fd);
   if(file == MAP_FAILED)
     exit(1);
@@ -2715,11 +2715,11 @@ writemap()
 void
 mapseveralfiles()
 {
-  int fd1 = readablefile();
+  int fd1 = onlyrdfile();
   char *file1 = mmap(fd1);
   if(file1 == MAP_FAILED)
     exit(1);
-  int fd2 = writablefile();
+  int fd2 = file();
   char *file2 = mmap(fd2);
   if(file2 == MAP_FAILED)
     exit(1);
@@ -2727,7 +2727,7 @@ mapseveralfiles()
   char *file3 = mmap(fd3);
   if(file3 == MAP_FAILED)
     exit(1);
-  int fd4 = readablefile();
+  int fd4 = onlyrdfile();
   char *file4 = mmap(fd4);
   if(file4 == MAP_FAILED)
     exit(1);
@@ -2747,7 +2747,7 @@ void
 unmaptwice()
 {
   char p[5];
-  int fd = writablefile();
+  int fd = file();
   read(fd, p, 5);
   char *file = mmap(fd);
   if(file == MAP_FAILED)
@@ -2763,7 +2763,7 @@ unmaptwice()
 void
 unmapnonbaseaddr()
 {
-  int fd = readablefile();
+  int fd = onlyrdfile();
   char *file = mmap(fd);
   if(file == MAP_FAILED)
     exit(1);
@@ -2787,7 +2787,7 @@ unmapinvalidaddr(char *s)
 void
 mappingtowriteonareadonlyfile()
 {
-  int fd = readablefile();
+  int fd = onlyrdfile();
   char *file = mmap(fd);
   if(file == MAP_FAILED)
     exit(1);
@@ -2804,11 +2804,11 @@ mappingtowriteonareadonlyfile()
 void
 mapfilesandfork()
 {
-  int fd1 = readablefile();
+  int fd1 = onlyrdfile();
   char *file1 = mmap(fd1);
   if(file1 == MAP_FAILED)
     exit(1);
-  int fd2 = writablefile();
+  int fd2 = file();
   char *file2 = mmap(fd2);
   if(file2 == MAP_FAILED)
     exit(1);
@@ -2968,7 +2968,7 @@ void
 addressingafterunmap()
 {
   if (fork() == 0) {
-    int fd = readablefile();
+    int fd = onlyrdfile();
     char *file = mmap(fd);
     file[0] = 'c';
     file[1] = 'h';
@@ -3009,7 +3009,7 @@ mapadir()
 void
 addressingoutsidefilesize()
 {
-  int fd = readablefile();
+  int fd = onlyrdfile();
   char *file = mmap(fd);
   if(file == MAP_FAILED)
     exit(1);
@@ -3025,7 +3025,7 @@ void
 addressingoutsidemap()
 {
   if (fork() == 0) {
-    int fd = readablefile();
+    int fd = onlyrdfile();
     char *file = mmap(fd);
 
     char c = file[4096];
@@ -3037,6 +3037,18 @@ addressingoutsidemap()
   if(xstatus == 0)
     exit(1);
   exit(0);
+}
+
+void
+mapmorethannomaps()
+{
+  int fd = onlyrdfile();
+  for(int i = 0; i < NOMAP; i++)
+    mmap(fd);
+
+  if(mmap(fd) == MAP_FAILED)
+    exit(0);
+  exit(1);
 }
 
 struct test {
@@ -3064,6 +3076,7 @@ struct test {
   {mapadir, "mapadir"},
   {addressingoutsidefilesize, "addressingoutsidefilesize"},
   {addressingoutsidemap, "addressingoutsidemap"},
+  {mapmorethannomaps, "mapmorethannomaps"},
   {copyin, "copyin"},
   {copyout, "copyout"},
   {copyinstr1, "copyinstr1"},
